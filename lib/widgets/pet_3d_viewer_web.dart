@@ -33,8 +33,10 @@ class Pet3DViewer extends StatelessWidget {
     _registered.add(viewType);
     ui_web.platformViewRegistry.registerViewFactory(viewType, (int viewId) {
       final el = html.Element.tag('model-viewer');
+      // Flutter Web 的 asset 基础路径是 assets/：pubspec 声明的
+      // assets/3d/pet_1.glb 实际 URL 为 assets/assets/3d/pet_1.glb（双 assets）
       el
-        ..setAttribute('src', modelPath)
+        ..setAttribute('src', 'assets/$modelPath')
         ..setAttribute('auto-rotate', '')
         ..setAttribute('camera-controls', '')
         ..setAttribute('disable-pan', '')
