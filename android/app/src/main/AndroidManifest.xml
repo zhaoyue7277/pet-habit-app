@@ -5,8 +5,15 @@
     <!-- 震动反馈（打卡 / 兑换成功的触觉反馈） -->
     <uses-permission android:name="android.permission.VIBRATE" />
     <!--
+      录音权限（朗读打卡）：用户点击「开始录音」时由系统弹窗实时征询，
+      用户拒绝则录音功能不可用，其余功能不受影响。
+      录音数据仅写入本机 Hive，任何时刻都不会外传。
+    -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!--
       注意：本 App 为纯本地单机应用，**不声明 android.permission.INTERNET**，
       从系统层面保证任何数据都不会离开本机。
+      （录音为纯本地采集+本地回放，不需要网络。）
 
       同时，由于约束 6 最终采用「切出 App 即暂停计时 / 暂停白噪音」方案（方案 A），
       番茄钟不依赖后台保活，因此**不需要任何前台服务权限**。
