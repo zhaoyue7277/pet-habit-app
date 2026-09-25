@@ -1,0 +1,48 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.kids.habit.pet_habit">
+
+    <!-- ================= 权限声明 ================= -->
+    <!-- 震动反馈（打卡 / 兑换成功的触觉反馈） -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!--
+      注意：本 App 为纯本地单机应用，**不声明 android.permission.INTERNET**，
+      从系统层面保证任何数据都不会离开本机。
+
+      同时，由于约束 6 最终采用「切出 App 即暂停计时 / 暂停白噪音」方案（方案 A），
+      番茄钟不依赖后台保活，因此**不需要任何前台服务权限**。
+    -->
+
+    <application
+        android:label="小宠习惯"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+    </application>
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
+        </intent>
+    </queries>
+</manifest>

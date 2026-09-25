@@ -1,0 +1,82 @@
+name: pet_habit
+description: "儿童习惯养成与宠物陪伴 App —— 纯本地单机版"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  # Dart 3.x（对齐 Flutter 3.38 / Dart 3.10 稳定版）
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ---------- 本地化（中文） ----------
+  flutter_localizations:
+    sdk: flutter
+
+  # ---------- 状态管理 ----------
+  # Riverpod：编译期安全、易测试，适合严格分层架构
+  flutter_riverpod: ^2.5.1
+
+  # ---------- 本地存储（纯本地，无任何云服务） ----------
+  # Hive 为纯 Dart 实现，无原生依赖，迁移鸿蒙阻力最小
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # ---------- 音频 ----------
+  audioplayers: ^6.1.0          # 白噪音播放
+
+  # ---------- 工具 ----------
+  crypto: ^3.0.5                # 家长 PIN 的 SHA-256 加盐哈希
+  fl_chart: ^0.69.0             # 数据报告图表（柱状图 / 饼图）
+
+  cupertino_icons: ^1.0.8
+
+  # ---------- 本地通知（可选，当前版本未启用） ----------
+  # 「切出即暂停」方案下无需到点提醒；如需「番茄钟结束提醒」可放开下面这行，
+  # 并在 services/ 中新增 notification_service.dart 调用。
+  # flutter_local_notifications: ^17.2.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/audio/
+    - assets/images/
+  fonts:
+    # ---------- 中文字体（Web 平台必需）----------
+    # 背景：Web 版 Flutter 无法访问设备系统字体，若未声明中文字体，
+    #      CanvasKit 会回退到 fonts.gstatic.com 动态下载（国内网络不可达，
+    #      导致界面中文全部空白）。
+    # 方案：用 pyftsubset 按 App 实际用到的字符子集化，从 19.5MB 压到 148KB，
+    #      既保证离线可用，又不显著增加包体。
+    # 注意：Android / iOS 平台系统自带中文字体，此声明不影响原生包体积
+    #      （字体文件同样会被打包，但 148KB 可忽略）。
+    - family: NotoSansSC
+      fonts:
+        - asset: assets/fonts/NotoSansSC-Regular.otf
+          weight: 400
+        - asset: assets/fonts/NotoSansSC-Bold.otf
+          weight: 700
+
+    # ---------- Emoji 字体（Web 平台必需）----------
+    # 用途：宠物形象 🐣🐶🐱、货币 🪙💛⭐、勋章 🏅🏆 等约 120 个 emoji。
+    # 说明：NotoColorEmoji 为 CBDT 彩色位图字体，无法子集化，故整体引入（4.7MB）。
+    #      仅 Web 构建会实际下载该文件；Android/iOS 用系统自带 emoji 字体，
+    #      Flutter 打包时虽会一并打入 assets，但不影响运行（可安全删除）。
+    - family: NotoColorEmoji
+      fonts:
+        - asset: assets/fonts/NotoColorEmoji.ttf
+
+    # ---------- 符号补充字体 ----------
+    # 补齐 NotoColorEmoji(v1.39, 2017) 尚未收录的 2 个字符：
+    #   U+1FA99 🪙 硬币（2020 Unicode 13.0 新增，用作宠物币图标）
+    #   U+2606 ☆ 空心星（习惯打卡未完成状态）
+    - family: NotoSymbols2
+      fonts:
+        - asset: assets/fonts/NotoSymbols2-Supplement.ttf

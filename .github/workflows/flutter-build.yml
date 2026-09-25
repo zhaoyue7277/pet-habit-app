@@ -1,0 +1,64 @@
+name: flutter-build
+
+# 小宠习惯 · 云构建（Web + Android APK）
+# 手动触发：Actions → flutter-build → Run workflow
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: 安装 Flutter（缓存加速）
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: stable
+          cache: true
+
+      - name: 拉取依赖
+        run: flutter pub get
+
+      - name: 静态分析（不阻断构建）
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
+
+      - name: 构建 Web（release）
+        run: flutter build web --release
+
+      - name: 构建 APK（release）
+        run: flutter build apk --release
+
+      - name: 检查 Web 产物（渲染引擎本地化）
+        run: |
+          echo "--- build/web 结构 ---"
+          ls -la build/web | head -30
+          if [ -d build/web/canvaskit ]; then
+            echo "canvaskit 已本地化: $(du -sh build/web/canvaskit)"
+          else
+            echo "警告: 未发现 canvaskit 目录，网页将尝试从 gstatic 加载"
+          fi
+
+      - name: 打包 Web 为 zip
+        run: |
+          cd build/web && zip -r ../../pet-habit-web.zip . && cd ../..
+
+      - name: 上传 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: pet-habit-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: 上传 Web 包
+        uses: actions/upload-artifact@v4
+        with:
+          name: pet-habit-web
+          path: pet-habit-web.zip

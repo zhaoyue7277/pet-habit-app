@@ -1,0 +1,44 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace = "com.kids.habit.pet_habit"
+    compileSdk = 36
+    // 显式锁定 NDK 版本（28.2.13676358，即 NDK r28c）。
+    // 该版本需与 audioplayers → jni 插件所要求的版本保持一致，否则 AGP 会抛
+    // [CXX1100] 版本冲突。直接写死字符串而不用 flutter.ndkVersion，可避免 AGP
+    // 联网向 dl.google.com 查询 SDK 包清单（沙箱/国内网络无法访问）而误报
+    // "NDK not configured"。
+    ndkVersion = "28.2.13676358"
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    defaultConfig {
+        applicationId = "com.kids.habit.pet_habit"
+        minSdkVersion = flutter.minSdkVersion
+        targetSdk = 36
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    buildTypes {
+        release {
+            // TODO: 上线前替换为正式签名配置
+            signingConfig = signingConfigs.debug
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
