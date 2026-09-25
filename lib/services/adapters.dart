@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:hive/hive.dart';
 
 import '../models/models.dart';
@@ -900,5 +902,72 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       ..write(obj.hasCompletedOnboarding)
       ..writeByte(11)
       ..write(obj.lastOpenTime);
+  }
+}
+
+// ===================================================================
+// Recording -- typeId 15（朗读录音）
+// ===================================================================
+//
+// 音频字节以 `Uint8List` 存在 `bytes` 字段（Hive 原生支持二进制），
+// 不落地到文件系统 —— 删除记录即释放音频。
+class RecordingAdapter extends TypeAdapter<Recording> {
+  @override
+  final int typeId = 15;
+
+  @override
+  Recording read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return Recording(
+      id: fields[0] as String,
+      childId: fields[1] as String,
+      habitId: fields[2] as String?,
+      dateKey: fields[3] as String,
+      durationMs: fields[4] as int? ?? 0,
+      // Hive 的 bytes 字段通常读回 Uint8List，但个别路径可能是 List<int>，
+      // 这里做一次兼容转换，避免 as Uint8List 直接抛类型错误。
+      bytes: _asBytes(fields[5]),
+      mimeType: fields[6] as String? ?? 'audio/mp4',
+      label: fields[7] as String? ?? '',
+      createdAt: fields[8] as DateTime,
+    );
+  }
+
+  /// 兼容 `Uint8List` / `List<int>` / `null` 三种读回形态
+  static Uint8List _asBytes(dynamic raw) {
+    if (raw == null) return Uint8List(0);
+    if (raw is Uint8List) return raw;
+    if (raw is List<int>) return Uint8List.fromList(raw);
+    if (raw is List) {
+      return Uint8List.fromList(raw.cast<int>());
+    }
+    return Uint8List(0);
+  }
+
+  @override
+  void write(BinaryWriter writer, Recording obj) {
+    writer
+      ..writeByte(9)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.childId)
+      ..writeByte(2)
+      ..write(obj.habitId)
+      ..writeByte(3)
+      ..write(obj.dateKey)
+      ..writeByte(4)
+      ..write(obj.durationMs)
+      ..writeByte(5)
+      ..write(obj.bytes)
+      ..writeByte(6)
+      ..write(obj.mimeType)
+      ..writeByte(7)
+      ..write(obj.label)
+      ..writeByte(8)
+      ..write(obj.createdAt);
   }
 }
