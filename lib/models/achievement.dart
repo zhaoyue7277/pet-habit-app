@@ -154,4 +154,10 @@ class AchievementConditionType {
 
   /// 使用天数
   static const String usageDays = 'usage_days';
+
+  /// 累计朗读录音条数（朗读打卡）
+  static const String totalRecording = 'total_recording';
+
+  /// 累计有效朗读时长（分钟）
+  static const String totalReadingMinutes = 'total_reading_minutes';
 }
