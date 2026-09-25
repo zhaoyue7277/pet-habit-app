@@ -95,14 +95,20 @@ class HabitParkPage extends ConsumerWidget {
           // ---------- 习惯列表（按时段分组） ----------
           if (grouped.isEmpty)
             SliverToBoxAdapter(
-              child: EmptyPlaceholder(
-                emoji: '🎠',
-                text: '还没有习惯哦',
-                hint: '点右上角「+」挑一个习惯吧',
-                action: BouncyButton(
-                  onPressed: () => _openCreate(context, ref),
-                  width: 200,
-                  child: const Text('添加习惯'),
+              child: Padding(
+                // 底部额外留白：避开中央 FAB 与底部导航栏
+                padding: const EdgeInsets.only(
+                  bottom: AppSizes.bottomNavHeight + 56,
+                ),
+                child: EmptyPlaceholder(
+                  emoji: '🎠',
+                  text: '还没有习惯哦',
+                  hint: '点右上角「+」挑一个习惯吧',
+                  action: BouncyButton(
+                    onPressed: () => _openCreate(context, ref),
+                    width: 200,
+                    child: const Text('添加习惯'),
+                  ),
                 ),
               ),
             )
