@@ -287,8 +287,8 @@ class _TaskCardState extends ConsumerState<TaskCard> {
   /// 优先级徽章（罗马数字）
   Widget _priorityBadge(Priority p) {
     final color = switch (p) {
-      Priority.must => const AppColors.secondary,
-      Priority.should => const Color(0xFFF5A25D),
+      Priority.must => AppColors.secondary,
+      Priority.should => AppColors.secondaryDark,
       Priority.could => AppColors.info,
     };
     return Container(
