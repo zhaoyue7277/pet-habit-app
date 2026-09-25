@@ -110,13 +110,14 @@ class _PetAvatarState extends State<PetAvatar>
     // ---------- v1.2：3D 模型品种直接渲染本地化 model-viewer ----------
     // 3D 品种有独立的 WebView / HtmlElementView 实现，自带呼吸与旋转动画，
     // 不再走代码绘制的 CustomPainter。
+    // 注意：必须传完整 modelPath（含 3d/ 目录段），viewer 内部会拼成
+    // assets/assets/3d/xxx.glb。若只传文件名会 404。
     final modelPath = widget.pet?.species.modelPath;
     if (modelPath != null) {
-      final fileName = modelPath.split('/').last;
       return SizedBox(
         width: widget.size,
         height: widget.size,
-        child: Pet3DViewer(modelPath: fileName),
+        child: Pet3DViewer(modelPath: modelPath),
       );
     }
 
