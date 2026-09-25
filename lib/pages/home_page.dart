@@ -289,14 +289,20 @@ class _HomePageState extends ConsumerState<HomePage> {
     if (grouped.isEmpty) {
       return [
         SliverToBoxAdapter(
-          child: EmptyPlaceholder(
-            emoji: '🎉',
-            text: '今天还没有任务哦',
-            hint: '点右上角「+」添加任务吧',
-            action: BouncyButton(
-              onPressed: _openTaskCreate,
-              width: 200,
-              child: const Text('添加任务'),
+          child: Padding(
+            // 底部额外留白：避开中央 FAB 与底部导航栏，避免视觉重叠
+            padding: const EdgeInsets.only(
+              bottom: AppSizes.bottomNavHeight + 56,
+            ),
+            child: EmptyPlaceholder(
+              emoji: '🎉',
+              text: '今天还没有任务哦',
+              hint: '点右上角「+」添加任务吧',
+              action: BouncyButton(
+                onPressed: _openTaskCreate,
+                width: 200,
+                child: const Text('添加任务'),
+              ),
             ),
           ),
         ),
