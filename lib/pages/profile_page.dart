@@ -15,6 +15,7 @@ import '../widgets/pin_dialog.dart';
 import 'achievement_page.dart';
 import 'diary_page.dart';
 import 'pet_center_page.dart';
+import 'recording_page.dart';
 import 'report_page.dart';
 
 /// 「我的」页面
@@ -226,6 +227,12 @@ class ProfilePage extends ConsumerWidget {
         label: '数据报告',
         color: AppColors.info,
         onTap: () => AppNavigator.push(context, const ReportPage()),
+      ),
+      _MenuEntry(
+        emoji: '🎤',
+        label: '朗读打卡',
+        color: AppColors.success,
+        onTap: () => AppNavigator.push(context, const RecordingPage()),
       ),
       _MenuEntry(
         emoji: '📔',
