@@ -160,19 +160,31 @@ enum ShopItemType {
   final String emoji;
 }
 
-/// 宠物品种（代码绘制的占位形象，后续可替换为图片资源）
+/// 宠物品种
+///
+/// v1.2 起新增 3 个 3D 模型品种（[modelPath] 非空），形象由本地化的
+/// model-viewer 渲染（Web 用 HtmlElementView，Android 用 WebView 加载
+/// 本地 asset，均无需网络）。原有 4 个品种仍为代码绘制的卡通形象。
 enum PetSpecies {
-  monster('小怪兽', 0xFF7EC8E3),
-  unicorn('小独角兽', 0xFFF7B8D0),
-  dragon('小火龙', 0xFF9FD9A8),
-  cat('小猫咪', 0xFFC3AED6);
+  monster('小怪兽', 0xFF7EC8E3, null),
+  unicorn('小独角兽', 0xFFF7B8D0, null),
+  dragon('小火龙', 0xFF9FD9A8, null),
+  cat('小猫咪', 0xFFC3AED6, null),
 
-  const PetSpecies(this.label, this.bodyColorValue);
+  /// 3D 模型品种（由 model-viewer 渲染，离线可用）
+  starPet('星际萌宠', 0xFF3E92CC, 'assets/3d/pet_1.glb'),
+  babyCat('小奶猫', 0xFFFF8A5C, 'assets/3d/pet_2.glb'),
+  jumpPet('跳跳仔', 0xFF5FB87A, 'assets/3d/pet_3.glb');
+
+  const PetSpecies(this.label, this.bodyColorValue, this.modelPath);
 
   final String label;
 
   /// 占位形象的主色（ARGB），用于代码绘制宠物
   final int bodyColorValue;
+
+  /// 3D 模型资源路径（null = 代码绘制的 2D 形象）
+  final String? modelPath;
 }
 
 /// 宠物状态（用于台词与形象表现）
