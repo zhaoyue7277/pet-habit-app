@@ -28,8 +28,26 @@ jobs:
       - name: 拉取依赖
         run: flutter pub get
 
-      - name: 静态分析（不阻断构建）
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
+      # ---------- 静态分析：本轮作为「自检门禁」 ----------
+      # 分成两步：
+      #   1) 全部问题打印到日志（含 info / warning），便于排查；
+      #   2) 单独检查 **error** 级别 —— 有 error 直接失败，
+      #      避免把编译不过的代码打成包。
+      # 说明：warning / info 不阻断（本项目有大量 lint 建议项，
+      # 例如 prefer_const_constructors），但 error 必须为零。
+      - name: 静态分析 · 全量输出
+        run: flutter analyze 2>&1 | tee analyze_full.log || true
+
+      - name: 静态分析 · error 门禁
+        run: |
+          echo "=== 统计 ==="
+          grep -c "error •" analyze_full.log || echo "0 error"
+          if grep -q "error •" analyze_full.log; then
+            echo "::error::发现 error 级别问题，构建终止"
+            grep "error •" analyze_full.log
+            exit 1
+          fi
+          echo "✓ 无 error 级别问题"
 
       - name: 构建 Web（release）
         run: flutter build web --release
