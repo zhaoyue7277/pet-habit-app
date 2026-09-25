@@ -97,8 +97,9 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
 
     return Scaffold(
       // 使用 IndexedStack 保持各 Tab 状态，避免来回切换丢失滚动位置
+      // （v1.2：不再 extendBody，让 body 止于导航栏上方，避免底部内容
+      // 被浮起的中央按钮遮挡 —— 旧版「添加习惯」等按钮被遮一半的问题）
       body: IndexedStack(index: _currentIndex, children: pages),
-      extendBody: true, // 让内容延伸到导航栏下方
       bottomNavigationBar: _buildBottomNav(),
     );
   }
