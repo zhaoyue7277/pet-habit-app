@@ -1,7 +1,7 @@
 name: pet_habit
 description: "儿童习惯养成与宠物陪伴 App —— 纯本地单机版"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.2.0+2
 
 environment:
   # Dart 3.x（对齐 Flutter 3.38 / Dart 3.10 稳定版）
@@ -27,6 +27,9 @@ dependencies:
   # ---------- 音频 ----------
   audioplayers: ^6.1.0          # 白噪音播放
 
+  # ---------- 3D 宠物（Android 端 WebView 渲染本地化 model-viewer） ----------
+  webview_flutter: ^4.10.0
+
   # ---------- 工具 ----------
   crypto: ^3.0.5                # 家长 PIN 的 SHA-256 加盐哈希
   fl_chart: ^0.69.0             # 数据报告图表（柱状图 / 饼图）
@@ -48,6 +51,7 @@ flutter:
   assets:
     - assets/audio/
     - assets/images/
+    - assets/3d/            # 3D 宠物模型（Draco 压缩 glb）+ 本地化 model-viewer
   fonts:
     # ---------- 中文字体（Web 平台必需）----------
     # 背景：Web 版 Flutter 无法访问设备系统字体，若未声明中文字体，
