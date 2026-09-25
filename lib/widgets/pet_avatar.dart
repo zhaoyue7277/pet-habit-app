@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_sizes.dart';
+import 'pet_3d_viewer.dart';
 
 /// 宠物形象组件（代码绘制的占位图形）
 ///
@@ -105,6 +106,19 @@ class _PetAvatarState extends State<PetAvatar>
     final bodyColor = widget.pet == null
         ? AppColors.primary
         : Color(widget.pet!.species.bodyColorValue);
+
+    // ---------- v1.2：3D 模型品种直接渲染本地化 model-viewer ----------
+    // 3D 品种有独立的 WebView / HtmlElementView 实现，自带呼吸与旋转动画，
+    // 不再走代码绘制的 CustomPainter。
+    final modelPath = widget.pet?.species.modelPath;
+    if (modelPath != null) {
+      final fileName = modelPath.split('/').last;
+      return SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: Pet3DViewer(modelPath: fileName),
+      );
+    }
 
     return AnimatedBuilder(
       animation: Listenable.merge([
