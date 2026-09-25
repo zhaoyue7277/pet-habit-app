@@ -14,6 +14,8 @@
     width: 100%; height: 100%;
     background-color: transparent;
     --poster-color: transparent;
+    --progress-bar-color: transparent;
+    --progress-mask: transparent;
   }
 </style>
 <script src="./model-viewer.min.js" type="module"></script>
@@ -29,11 +31,39 @@
   rotation-per-second="30deg">
 </model-viewer>
 <script>
-  // Flutter 通过 runJavaScript 调用：setPetModel('./pet_1.glb')
+  // 与 Flutter 通信：上报模型真实加载状态。
+  // Flutter 侧通过 addJavaScriptHandler('petModelState') 接收。
+  function report(state, detail) {
+    try {
+      if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+        window.flutter_inappwebview.callHandler('petModelState', state, detail || '');
+      }
+    } catch (e) { /* 非 Flutter 环境（浏览器调试）忽略 */ }
+  }
+
+  var mv = document.getElementById('mv');
+
+  // 模型真正解码完成 → 通知 Flutter 结束 loading
+  mv.addEventListener('load', function () { report('loaded'); });
+
+  // 解码失败 → 通知 Flutter 展示失败态
+  mv.addEventListener('error', function (e) {
+    var type = (e && e.detail && e.detail.type) || 'unknown';
+    report('error', type);
+  });
+
+  // Flutter 调用：设置模型路径（支持重复调用）
   window.setPetModel = function (src) {
-    var mv = document.getElementById('mv');
-    if (mv) mv.setAttribute('src', src);
+    if (!mv) mv = document.getElementById('mv');
+    if (!mv) { report('error', 'no-viewer'); return; }
+    mv.setAttribute('src', src);
   };
+
+  // 兜底：若 15s 内既没 load 也没 error，上报超时
+  var guard = setTimeout(function () {
+    if (!mv.loaded) report('error', 'timeout-watchdog');
+  }, 15000);
+  mv.addEventListener('load', function () { clearTimeout(guard); });
 </script>
 </body>
 </html>
