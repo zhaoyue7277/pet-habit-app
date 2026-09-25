@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +7,7 @@ import '../models/models.dart';
 import '../providers/core_providers.dart';
 import '../providers/settings_providers.dart';
 import '../services/database_service.dart';
+import '../services/recording_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_sizes.dart';
 import '../widgets/common_widgets.dart';
@@ -265,18 +268,25 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
         .where((s) => s.dateKey == dateKey && s.isCompleted)
         .fold(0, (sum, s) => sum + s.actualMinutes);
 
+    // 当天的朗读录音
+    final recordings = db.getRecordingsOn(childId, dateKey);
+
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(
-                '${_selectedDate.month}月${_selectedDate.day}日',
-                style: const TextStyle(
-                  fontSize: AppSizes.fontHeadline,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+              Flexible(
+                child: Text(
+                  '${_selectedDate.month}月${_selectedDate.day}日',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: AppSizes.fontHeadline,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
               const Spacer(),
@@ -286,11 +296,19 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
                   color: AppColors.primaryLight,
                   textColor: AppColors.primaryDark,
                 ),
+              if (recordings.isNotEmpty) ...[
+                if (minutes > 0) const SizedBox(width: AppSizes.spaceXs),
+                TagChip(
+                  text: '🎤 朗读 ${recordings.length} 次',
+                  color: AppColors.success.withValues(alpha: 0.18),
+                  textColor: AppColors.success,
+                ),
+              ],
             ],
           ),
           const SizedBox(height: AppSizes.spaceLg),
 
-          if (doneTasks.isEmpty && checkIns.isEmpty)
+          if (doneTasks.isEmpty && checkIns.isEmpty && recordings.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: AppSizes.spaceLg),
               child: Center(
@@ -365,6 +383,13 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
                 ),
               );
             }),
+
+            // 朗读录音（可点击回放）
+            ...recordings.map((r) => _RecordingRow(
+                  recording: r,
+                  habitName:
+                      (db.habits.get(r.habitId) as Habit?)?.name ?? r.label,
+                )),
           ],
         ],
       ),
@@ -481,10 +506,131 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
         days.add(note.dateKey);
       }
     }
+    // 朗读录音日
+    for (final r in db.recordings.values.cast<Recording>()) {
+      if (r.childId == childId) days.add(r.dateKey);
+    }
 
     return days;
   }
 
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+/// 单条朗读录音行（点击试听 / 再次点击停止）
+class _RecordingRow extends StatefulWidget {
+  const _RecordingRow({required this.recording, required this.habitName});
+
+  final Recording recording;
+  final String habitName;
+
+  @override
+  State<_RecordingRow> createState() => _RecordingRowState();
+}
+
+class _RecordingRowState extends State<_RecordingRow> {
+  final RecordingService _service = RecordingService.instance;
+  StreamSubscription<void>? _sub;
+  bool _playing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _sub = _service.onPlaybackComplete.listen((_) {
+      if (mounted) setState(() => _playing = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    if (_playing) _service.stopPlayback();
+    super.dispose();
+  }
+
+  Future<void> _toggle() async {
+    if (_playing) {
+      await _service.stopPlayback();
+      if (mounted) setState(() => _playing = false);
+      return;
+    }
+    final ok = await _service.playBytes(
+      widget.recording.bytes,
+      mimeType: widget.recording.mimeType,
+    );
+    if (!mounted) return;
+    if (ok) {
+      setState(() => _playing = true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('这段录音播放失败了'),
+          backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = widget.recording;
+    final time =
+        '${r.createdAt.hour.toString().padLeft(2, '0')}:'
+        '${r.createdAt.minute.toString().padLeft(2, '0')}';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.spaceSm),
+      child: GestureDetector(
+        onTap: _toggle,
+        behavior: HitTestBehavior.opaque,
+        child: Row(
+          children: [
+            const Text('🎤', style: TextStyle(fontSize: 16)),
+            const SizedBox(width: AppSizes.spaceSm),
+            Expanded(
+              child: Text(
+                widget.habitName.isEmpty ? '朗读' : widget.habitName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: AppSizes.fontBody,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            // 播放按钮
+            Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: _playing
+                    ? AppColors.success
+                    : AppColors.success.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _playing ? Icons.stop_rounded : Icons.play_arrow_rounded,
+                size: 20,
+                color: _playing ? Colors.white : AppColors.success,
+              ),
+            ),
+            const SizedBox(width: AppSizes.spaceSm),
+            Text(
+              '${r.durationLabel} · $time',
+              style: const TextStyle(
+                fontSize: AppSizes.fontCaption,
+                color: AppColors.textHint,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
