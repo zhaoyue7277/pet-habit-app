@@ -32,8 +32,10 @@
   <title>小宠习惯</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- 3D 宠物渲染（本地化 model-viewer，不依赖外网；Web 端由 HtmlElementView 使用） -->
-  <script src="assets/3d/model-viewer.min.js" type="module"></script>
+  <!-- 3D 宠物渲染（本地化 model-viewer，不依赖外网；Web 端由 HtmlElementView 使用）
+       注意：Flutter Web 的 asset 基础路径是 assets/，声明路径 assets/3d/xxx
+       的实际 URL 是 assets/assets/3d/xxx（双 assets 前缀）。 -->
+  <script src="assets/assets/3d/model-viewer.min.js" type="module"></script>
 </head>
 <body>
   <!--
