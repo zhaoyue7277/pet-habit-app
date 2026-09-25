@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' show FontFeature;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -521,13 +520,13 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
               height: 116,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: recording
-                    ? const LinearGradient(
-                        colors: [Color(0xFFFF9A8B), Color(0xFFE76F51)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : AppColors.primaryGradient,
+                gradient: LinearGradient(
+                  colors: recording
+                      ? const [Color(0xFFFF9A8B), Color(0xFFE76F51)]
+                      : AppColors.primaryGradient,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 boxShadow: AppShadows.fab,
               ),
               child: Column(
