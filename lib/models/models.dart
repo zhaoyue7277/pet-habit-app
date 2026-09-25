@@ -12,5 +12,6 @@ export 'exchange_log.dart';
 export 'habit.dart';
 export 'habit_template.dart';
 export 'pet.dart';
+export 'recording.dart';
 export 'shop_item.dart';
 export 'task.dart';
