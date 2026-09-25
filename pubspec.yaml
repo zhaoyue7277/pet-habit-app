@@ -1,7 +1,7 @@
 name: pet_habit
 description: "儿童习惯养成与宠物陪伴 App —— 纯本地单机版"
 publish_to: 'none'
-version: 1.2.2+4
+version: 1.2.3+5
 
 environment:
   # Dart 3.x（对齐 Flutter 3.38 / Dart 3.10 稳定版）
@@ -25,7 +25,11 @@ dependencies:
   hive_flutter: ^1.1.0
 
   # ---------- 音频 ----------
-  audioplayers: ^6.1.0          # 白噪音播放
+  audioplayers: ^6.1.0          # 白噪音播放 + 朗读录音回放
+  # 录音：朗读打卡。Android 走 MediaRecorder / MediaCodec，
+  # Web 走 getUserMedia + MediaRecorder，同一套 Dart API；
+  # 采用 startStream 内存累积字节，不落地文件，回放复用 audioplayers。
+  record: ^7.1.1
 
   # ---------- 3D 宠物（Android 端 WebView 渲染本地化 model-viewer） ----------
   # 选用 flutter_inappwebview 而非官方 webview_flutter：
