@@ -147,28 +147,36 @@ class WeekDateBar extends ConsumerWidget {
     final checkedIds = ref.watch(checkedHabitIdsProvider);
     final tasks = ref.watch(todayTasksProvider);
 
+    // **响应式改造（v1.2.3）**：原实现用横向 ListView + 固定 48px 日期格，
+    // 7 格总宽 ≈ 416px，窄屏（<416dp）下第 7 格被挤出屏幕。
+    // 改为 Row + Expanded 均分，任何屏宽下 7 天都完整可见。
     return SizedBox(
       height: 72,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
+      child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
-        itemCount: 7,
-        separatorBuilder: (_, __) => const SizedBox(width: AppSizes.spaceSm),
-        itemBuilder: (context, index) {
-          final day = monday.add(Duration(days: index));
-          final isToday = day.day == today.day &&
-              day.month == today.month &&
-              day.year == today.year;
-          // 有任务或有打卡的日子显示小圆点
-          final hasActivity = checkedIds.isNotEmpty
-              ? true
-              : tasks.any((t) => t.isDone);
-          return _DateCell(
-            day: day,
-            isToday: isToday,
-            hasActivity: hasActivity && !day.isAfter(today),
-          );
-        },
+        child: Row(
+          children: [
+            for (int index = 0; index < 7; index++) ...[
+              if (index > 0) const SizedBox(width: AppSizes.spaceSm - 2),
+              Expanded(
+                child: Builder(builder: (context) {
+                  final day = monday.add(Duration(days: index));
+                  final isToday = day.day == today.day &&
+                      day.month == today.month &&
+                      day.year == today.year;
+                  final hasActivity = checkedIds.isNotEmpty
+                      ? true
+                      : tasks.any((t) => t.isDone);
+                  return _DateCell(
+                    day: day,
+                    isToday: isToday,
+                    hasActivity: hasActivity && !day.isAfter(today),
+                  );
+                }),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -202,22 +210,25 @@ class _DateCell extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSizes.spaceXs),
-        Container(
-          width: 48,
-          height: 46,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            // v2：今天 = 主色实心块，辨识度更高
-            color: isToday ? AppColors.primary : AppColors.surfaceVariant,
-            borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-            boxShadow: isToday ? AppShadows.card : null,
-          ),
-          child: Text(
-            '${day.day}',
-            style: TextStyle(
-              fontSize: AppSizes.fontBody,
-              fontWeight: FontWeight.w700,
-              color: isToday ? Colors.white : AppColors.textPrimary,
+        // **响应式**：日期块撑满 Expanded 给的宽度（不再固定 48），
+        // 高度固定 46 保持视觉一致。
+        AspectRatio(
+          aspectRatio: 1.05,
+          child: Container(
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              // v2：今天 = 主色实心块，辨识度更高
+              color: isToday ? AppColors.primary : AppColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+              boxShadow: isToday ? AppShadows.card : null,
+            ),
+            child: Text(
+              '${day.day}',
+              style: TextStyle(
+                fontSize: AppSizes.fontBody,
+                fontWeight: FontWeight.w700,
+                color: isToday ? Colors.white : AppColors.textPrimary,
+              ),
             ),
           ),
         ),
@@ -271,6 +282,9 @@ class TodayStatsCard extends ConsumerWidget {
             child: Center(
               child: Text(
                 '${now.month}月${now.day}日（周${weekdays[now.weekday - 1]}）',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: AppSizes.fontLabel,
                   fontWeight: FontWeight.w700,
@@ -351,18 +365,26 @@ class TodayStatsCard extends ConsumerWidget {
   }
 
   Widget _statLine(String label, String value) {
+    // **响应式**：窄卡片下两个 Text 会一起挤爆宽度导致溢出。
+    // label 用 Flexible 允许收缩，value 固定不换行（数值最重要）。
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: AppSizes.fontLabel,
-            color: AppColors.textSecondary,
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: AppSizes.fontLabel,
+              color: AppColors.textSecondary,
+            ),
           ),
         ),
+        const SizedBox(width: 2),
         Text(
           value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontSize: AppSizes.fontLabel,
             fontWeight: FontWeight.w700,
