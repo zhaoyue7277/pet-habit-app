@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'services/database_service.dart';
 import 'services/hive_init.dart';
+import 'services/recording_service.dart';
 import 'services/white_noise_service.dart';
 import 'theme/app_theme.dart';
 import 'widgets/home_scaffold.dart';
@@ -43,6 +44,11 @@ Future<void> main() async {
 
   // 初始化音频服务
   await WhiteNoiseService.instance.init();
+
+  // 预热录音服务（不主动申请权限，仅构造播放器/录音器实例，
+  // 让用户点「开始朗读」时的首次响应更快）
+  // ignore: unawaited_futures
+  RecordingService.instance.hasPermission();
 
   runApp(
     const ProviderScope(
