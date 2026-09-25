@@ -127,6 +127,9 @@ class ShopController {
       await _db.addToInventory(child.id, item);
     }
 
+    // 兑换会推进「累计兑换」类勋章进度
+    await _db.refreshAchievements(child.id);
+
     _bump();
     return log;
   }
