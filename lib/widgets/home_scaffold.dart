@@ -6,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../pages/home_page.dart';
 import '../pages/habit_park_page.dart';
 import '../pages/profile_page.dart';
+import '../pages/recording_page.dart';
 import '../pages/shop_page.dart';
 import '../providers/core_providers.dart';
 import '../providers/settings_providers.dart';
+import '../routes/app_router.dart';
 import '../services/database_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_sizes.dart';
@@ -259,6 +261,9 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
               ),
             ),
             const SizedBox(height: AppSizes.spaceXl),
+            // 3 列变 2×2：新增「朗读打卡」后若仍单行 4 列，
+            // 在 360dp 窄屏上每格仅 ~70dp，图标+文字必然挤压换行。
+            // 采用 2×2 等分网格，任意宽度下都保持舒适的点击区域。
             Row(
               children: [
                 Expanded(
@@ -285,7 +290,11 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
                     },
                   ),
                 ),
-                const SizedBox(width: AppSizes.spaceLg),
+              ],
+            ),
+            const SizedBox(height: AppSizes.spaceLg),
+            Row(
+              children: [
                 Expanded(
                   child: _quickAction(
                     icon: Icons.local_fire_department_rounded,
@@ -294,6 +303,18 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
                     onTap: () {
                       Navigator.pop(ctx);
                       setState(() => _currentIndex = 1);
+                    },
+                  ),
+                ),
+                const SizedBox(width: AppSizes.spaceLg),
+                Expanded(
+                  child: _quickAction(
+                    icon: Icons.mic_rounded,
+                    label: '朗读打卡',
+                    color: AppColors.success,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _openRecording();
                     },
                   ),
                 ),
@@ -336,6 +357,31 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
         ),
       ),
     );
+  }
+
+  /// 打开朗读录音页
+  ///
+  /// 录音是「孩子维度」的功能：没有档案时先提示去创建，
+  /// 避免进入后一片空白（也避免误以为是功能坏了）。
+  void _openRecording() {
+    final childId = ref.read(activeChildIdProvider);
+    if (childId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            '请先创建小朋友档案，再开始朗读打卡',
+            style: TextStyle(fontSize: AppSizes.fontBody),
+          ),
+          backgroundColor: AppColors.info,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          ),
+        ),
+      );
+      return;
+    }
+    AppNavigator.push(context, const RecordingPage());
   }
 }
 
