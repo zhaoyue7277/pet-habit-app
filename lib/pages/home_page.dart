@@ -292,7 +292,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           child: EmptyPlaceholder(
             emoji: '🎉',
             text: '今天还没有任务哦',
-            hint: '点击右上角 + 添加一个吧',
+            hint: '点右上角「+」添加任务吧',
             action: BouncyButton(
               onPressed: _openTaskCreate,
               width: 200,
