@@ -215,6 +215,8 @@ class HabitController {
   /// 打卡，返回本次获得的奖励数值
   Future<int> checkIn(Habit habit) async {
     final reward = await _db.checkInHabit(habit);
+    // 打卡会推进「累计打卡 / 最长连击」类勋章进度
+    await _db.refreshAchievements(habit.childId);
     _bump();
     return reward;
   }
