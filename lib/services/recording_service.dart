@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
@@ -100,7 +99,7 @@ class RecordingService {
         return '没有麦克风权限，请在系统设置里允许「小宠习惯」录音';
       }
 
-      final config = kIsWeb ? _webConfig : _nativeConfig;
+      const config = kIsWeb ? _webConfig : _nativeConfig;
 
       // Web 上若 opus 不被支持，再退到默认（浏览器自动协商容器）
       if (kIsWeb) {
