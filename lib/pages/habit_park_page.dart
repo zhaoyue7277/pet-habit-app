@@ -9,6 +9,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_sizes.dart';
 import '../widgets/common_widgets.dart';
 import 'habit_edit_page.dart';
+import 'recording_page.dart';
 
 /// 习惯游乐园页面
 ///
@@ -131,6 +132,9 @@ class HabitParkPage extends ConsumerWidget {
                                   habit: h,
                                   onCheckIn: () => _checkIn(context, ref, h),
                                   onTap: () => _openEdit(context, h),
+                                  onRecord: _isReadingHabit(h)
+                                      ? () => _openRecording(context, h)
+                                      : null,
                                 ),
                               ))
                           .toList(),
@@ -485,6 +489,25 @@ class HabitParkPage extends ConsumerWidget {
   void _openEdit(BuildContext context, Habit habit) {
     AppNavigator.push(context, HabitEditPage(habit: habit));
   }
+
+  /// 是否为「朗读 / 口语」类习惯（显示麦克风入口）
+  ///
+  /// 判定基于习惯名称关键词 + 图标，覆盖内置模板（早读、讲故事、朗读、
+  /// 背单词、英语口语…）以及用户自建时常用的表述。
+  static const List<String> _readingKeywords = [
+    '朗读', '早读', '读', '背诵', '背诵', '口', '说', '讲', '故事', '英语',
+    '读绘本', '阅读', '唐诗', '古诗', '课文',
+  ];
+
+  bool _isReadingHabit(Habit habit) {
+    final text = '${habit.name}${habit.iconEmoji}';
+    return _readingKeywords.any(text.contains);
+  }
+
+  /// 进入朗读打卡（录音完成后自动完成该习惯的当日打卡）
+  void _openRecording(BuildContext context, Habit habit) {
+    AppNavigator.push(context, RecordingPage(habit: habit));
+  }
 }
 
 /// 习惯卡片 —— 对应截图中的单个习惯行
@@ -496,11 +519,15 @@ class HabitCard extends ConsumerWidget {
     required this.habit,
     required this.onCheckIn,
     this.onTap,
+    this.onRecord,
   });
 
   final Habit habit;
   final VoidCallback onCheckIn;
   final VoidCallback? onTap;
+
+  /// 朗读打卡入口（仅朗读/口语相关习惯会传入）
+  final VoidCallback? onRecord;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -651,6 +678,28 @@ class HabitCard extends ConsumerWidget {
           ),
 
           const SizedBox(width: AppSizes.spaceSm),
+
+          // ---------- 朗读打卡入口（仅朗读/口语类习惯） ----------
+          if (onRecord != null) ...[
+            GestureDetector(
+              onTap: onRecord,
+              child: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                ),
+                child: const Icon(
+                  Icons.mic_rounded,
+                  size: 22,
+                  color: AppColors.success,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSizes.spaceSm),
+          ],
 
           // ---------- 打卡勾选框 ----------
           GestureDetector(
