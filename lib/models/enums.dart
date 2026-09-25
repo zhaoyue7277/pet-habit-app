@@ -172,7 +172,7 @@ enum PetSpecies {
   cat('小猫咪', 0xFFC3AED6, null),
 
   /// 3D 模型品种（由 model-viewer 渲染，离线可用）
-  starPet('星际萌宠', 0xFF3E92CC, 'assets/3d/pet_1.glb'),
+  starPet('机器猫', 0xFF3E92CC, 'assets/3d/pet_1.glb'),
   babyCat('小奶猫', 0xFFFF8A5C, 'assets/3d/pet_2.glb'),
   jumpPet('跳跳仔', 0xFF5FB87A, 'assets/3d/pet_3.glb');
 
