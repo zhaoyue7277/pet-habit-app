@@ -148,8 +148,9 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
                 controller.addJavaScriptHandler(
                   handlerName: 'petModelState',
                   callback: (data) {
-                    final args = data.args;
-                    final state = args.isNotEmpty ? '${args.first}' : '';
+                    // flutter_inappwebview 6.x：callback 入参即 JS 传参列表本身
+                    // （非 { args: [...] } 包装对象），取 data[0] 为状态字符串。
+                    final state = (data.isNotEmpty) ? '${data.first}' : '';
                     if (!mounted) return null;
                     if (state == 'loaded') {
                       _timeoutTimer?.cancel();
