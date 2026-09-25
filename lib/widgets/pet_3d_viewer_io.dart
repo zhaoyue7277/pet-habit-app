@@ -17,7 +17,7 @@ class Pet3DViewer extends StatefulWidget {
     this.height,
   });
 
-  /// 模型文件名（assets/3d/ 目录下），如 pet_1.glb
+  /// 模型资源路径（相对 asset 根），如 assets/3d/pet_1.glb
   final String modelPath;
   final double? width;
   final double? height;
@@ -31,6 +31,8 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
 
   @override
   Widget build(BuildContext context) {
+    // viewer.html 与 pet_*.glb 同位于 assets/3d/，因此只取文件名做同目录相对路径
+    final fileName = widget.modelPath.split('/').last;
     return SizedBox(
       width: widget.width,
       height: widget.height,
@@ -48,7 +50,7 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
             onLoadStop: (controller, url) {
               // 页面加载完成后指定模型（相对路径，同目录解析）
               controller.evaluateJavascript(
-                source: 'setPetModel("./${widget.modelPath}")',
+                source: 'setPetModel("./$fileName")',
               );
               if (mounted) setState(() => _loaded = true);
             },
