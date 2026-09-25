@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
-/// Android/iOS 端 3D 宠物渲染：WebView 加载本地 asset 的 viewer.html
+/// Android/iOS 端 3D 宠物渲染：InAppWebView 加载本地 asset 的 viewer.html
 ///
-/// viewer.html 与 model-viewer.min.js、pet_*.glb 同位于 assets/3d/，
-/// 通过 loadFlutterAsset 以 file:///android_asset/flutter_assets/ 形式加载，
-/// 相对路径自动解析到同目录 —— 全程离线，无需 INTERNET 权限。
+/// viewer.html 与 model-viewer.min.js、pet_*.glb 同位于 assets/3d/。
+/// model-viewer 通过 fetch 加载 glb（file:// 同目录），因此必须显式开启：
+/// - allowFileAccess                 允许 WebView 访问文件
+/// - allowFileAccessFromFileURLs     file:// 页面可加载同域 file:// 脚本/资源
+/// - allowUniversalAccessFromFileURLs  file:// 页面的 fetch/XHR 可访问 file://
+/// 全程离线，无需 INTERNET 权限（保持纯本地单机定位）。
 class Pet3DViewer extends StatefulWidget {
   const Pet3DViewer({
     super.key,
@@ -24,28 +27,7 @@ class Pet3DViewer extends StatefulWidget {
 }
 
 class _Pet3DViewerState extends State<Pet3DViewer> {
-  late final WebViewController _controller;
   bool _loaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(Colors.transparent)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageFinished: (_) {
-            // 页面加载完成后由 Flutter 指定模型（相对路径，同目录解析）
-            _controller.runJavaScript(
-              'setPetModel("./${widget.modelPath}")',
-            );
-            if (mounted) setState(() => _loaded = true);
-          },
-        ),
-      )
-      ..loadFlutterAsset('assets/3d/viewer.html');
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +36,23 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
       height: widget.height,
       child: Stack(
         children: [
-          WebViewWidget(controller: _controller),
+          InAppWebView(
+            initialFile: 'assets/3d/viewer.html',
+            initialSettings: InAppWebViewSettings(
+              javaScriptEnabled: true,
+              allowFileAccess: true,
+              allowFileAccessFromFileURLs: true,
+              allowUniversalAccessFromFileURLs: true,
+              transparentBackground: true,
+            ),
+            onLoadStop: (controller, url) {
+              // 页面加载完成后指定模型（相对路径，同目录解析）
+              controller.evaluateJavascript(
+                source: 'setPetModel("./${widget.modelPath}")',
+              );
+              if (mounted) setState(() => _loaded = true);
+            },
+          ),
           // 模型解码（Draco + 大纹理）需要时间，解码完成前显示占位
           if (!_loaded)
             const Center(
