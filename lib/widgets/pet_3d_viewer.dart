@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 /// 3D 宠物渲染组件 —— 平台分发入口
 ///
 /// - Web：HtmlElementView 嵌入 <model-viewer>（pet_3d_viewer_web.dart）
