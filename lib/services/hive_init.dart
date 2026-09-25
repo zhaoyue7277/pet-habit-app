@@ -27,6 +27,7 @@ class HiveInit {
   static const String boxPetDialogues = 'pet_dialogues';
   static const String boxDailyNotes = 'daily_notes';
   static const String boxPomodoroSessions = 'pomodoro_sessions';
+  static const String boxRecordings = 'recordings';
   static const String boxSettings = 'settings';
 
   /// 需要打开的普通 Box 列表
@@ -45,6 +46,7 @@ class HiveInit {
     boxPetDialogues,
     boxDailyNotes,
     boxPomodoroSessions,
+    boxRecordings,
   ];
 
   /// 初始化 Hive 并注册全部适配器
@@ -67,7 +69,8 @@ class HiveInit {
       ..registerAdapter(PetDialogueAdapter())              // 11
       ..registerAdapter(DailyNoteAdapter())                // 12
       ..registerAdapter(PomodoroSessionAdapter())          // 13
-      ..registerAdapter(AppSettingsAdapter());             // 14
+      ..registerAdapter(AppSettingsAdapter())              // 14
+      ..registerAdapter(RecordingAdapter());               // 15
 
     // ---------- 打开所有 Box ----------
     for (final name in allBoxes) {
