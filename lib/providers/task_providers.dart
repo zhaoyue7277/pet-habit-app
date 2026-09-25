@@ -187,6 +187,7 @@ class TaskController {
   /// 返回实际发放的奖励数值。
   Future<int> completeTask(Task task) async {
     final reward = await _db.completeSimpleTask(task);
+    await _db.refreshAchievements(task.childId);
     _bump();
     return reward;
   }
