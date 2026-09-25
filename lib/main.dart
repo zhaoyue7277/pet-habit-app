@@ -25,6 +25,16 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  // ---------- 状态栏 / 导航栏样式（v1.2 修复「状态栏分割明显」） ----------
+  // 让状态栏背景与页面背景（云底 #F4F9FD）同色，消除系统状态栏与
+  // App 内容之间的生硬分割线；图标保持深色（浅色背景上的深色图标）。
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Color(0xFFF4F9FD),
+    statusBarIconBrightness: Brightness.dark,
+    systemNavigationBarColor: Colors.white,
+    systemNavigationBarIconBrightness: Brightness.dark,
+  ));
+
   // 初始化本地数据库（纯本地，无任何网络依赖）
   await HiveInit.init();
 
@@ -53,6 +63,20 @@ class PetHabitApp extends ConsumerWidget {
 
       // ---------- 主题 ----------
       theme: AppTheme.light(),
+
+      // ---------- 锁定文字缩放（v1.2 修复真机布局错乱/截断） ----------
+      // 部分手机系统字号设为「大/超大」时，Flutter 默认跟随系统缩放，
+      // 导致「习惯乐园」Tab、「待办任务」标题、日期数字等被挤出容器
+      // （换行 / 截断 / 与按钮重叠）。儿童 App 的布局按固定字号设计，
+      // 这里统一锁定为不缩放，保证任何系统字号设置下布局稳定。
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.noScaling,
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
 
       // ---------- 本地化（中文） ----------
       localizationsDelegates: const [
