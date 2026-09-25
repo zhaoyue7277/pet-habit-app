@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: transparent;
+  }
+  model-viewer {
+    width: 100%; height: 100%;
+    background-color: transparent;
+    --poster-color: transparent;
+  }
+</style>
+<script src="./model-viewer.min.js" type="module"></script>
+</head>
+<body>
+<model-viewer
+  id="mv"
+  auto-rotate
+  camera-controls
+  disable-pan
+  shadow-intensity="1"
+  exposure="1"
+  rotation-per-second="30deg">
+</model-viewer>
+<script>
+  // Flutter 通过 runJavaScript 调用：setPetModel('./pet_1.glb')
+  window.setPetModel = function (src) {
+    var mv = document.getElementById('mv');
+    if (mv) mv.setAttribute('src', src);
+  };
+</script>
+</body>
+</html>
