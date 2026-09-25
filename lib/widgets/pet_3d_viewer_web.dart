@@ -23,14 +23,15 @@ class Pet3DViewer extends StatelessWidget {
   final double? width;
   final double? height;
 
-  /// platformViewRegistry 全局只允许注册一次，用静态标记防重复
-  static bool _factoryRegistered = false;
-  static const String _viewType = 'pet-3d-model-viewer';
+  /// platformViewRegistry 每个 viewType 只允许注册一次。
+  /// 不同模型使用不同 viewType（按文件名区分），避免「第一个注册的
+  /// 模型工厂闭包捕获参数，导致所有 3D 宠物渲染成同一个模型」的问题。
+  static final Set<String> _registered = <String>{};
 
-  static void _registerFactory(String modelPath) {
-    if (_factoryRegistered) return;
-    _factoryRegistered = true;
-    ui_web.platformViewRegistry.registerViewFactory(_viewType, (int viewId) {
+  void _registerFactory(String viewType, String modelPath) {
+    if (_registered.contains(viewType)) return;
+    _registered.add(viewType);
+    ui_web.platformViewRegistry.registerViewFactory(viewType, (int viewId) {
       final el = html.Element.tag('model-viewer');
       el
         ..setAttribute('src', modelPath)
@@ -48,11 +49,14 @@ class Pet3DViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    _registerFactory(modelPath);
+    // viewType 与模型绑定：pet-3d-mv-pet_1.glb / pet-3d-mv-pet_2.glb ...
+    final fileName = modelPath.split('/').last;
+    final viewType = 'pet-3d-mv-$fileName';
+    _registerFactory(viewType, modelPath);
     return SizedBox(
       width: width,
       height: height,
-      child: const HtmlElementView(viewType: _viewType),
+      child: HtmlElementView(viewType: viewType),
     );
   }
 }
