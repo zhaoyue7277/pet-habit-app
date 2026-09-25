@@ -98,7 +98,7 @@ class HabitParkPage extends ConsumerWidget {
               child: EmptyPlaceholder(
                 emoji: '🎠',
                 text: '还没有习惯哦',
-                hint: '点击右上角 + 从习惯库挑选一个吧',
+                hint: '点右上角「+」挑一个习惯吧',
                 action: BouncyButton(
                   onPressed: () => _openCreate(context, ref),
                   width: 200,
