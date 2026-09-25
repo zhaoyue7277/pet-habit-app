@@ -34,6 +34,7 @@ class DatabaseService {
   Box get petDialogues => Hive.box(HiveInit.boxPetDialogues);
   Box get dailyNotes => Hive.box(HiveInit.boxDailyNotes);
   Box get pomodoroSessions => Hive.box(HiveInit.boxPomodoroSessions);
+  Box get recordings => Hive.box(HiveInit.boxRecordings);
 
   /// 设置表（单例，固定 key）
   static const String _settingsKey = 'app_settings';
@@ -106,6 +107,8 @@ class DatabaseService {
     await _deleteWhere(inventory, (InventoryItem e) => e.childId == childId);
     await _deleteWhere(dailyNotes, (DailyNote e) => e.childId == childId);
     await _deleteWhere(pomodoroSessions, (PomodoroSession e) => e.childId == childId);
+    // 录音字节随记录一并删除，不残留孤儿音频
+    await _deleteWhere(recordings, (Recording e) => e.childId == childId);
   }
 
   /// 通用按条件批量删除
@@ -552,6 +555,220 @@ class DatabaseService {
         .fold(0, (sum, s) => sum + s.actualMinutes);
   }
 
+  // ==================== 朗读录音 ====================
+
+  /// 某孩子全部录音（按时间倒序，最新在前）
+  List<Recording> getRecordings(String childId) {
+    final list = recordings.values
+        .cast<Recording>()
+        .where((r) => r.childId == childId)
+        .toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+  /// 某孩子某天的录音（按时间正序，便于按时间线展示）
+  List<Recording> getRecordingsOn(String childId, String dateKey) {
+    final list =
+        getRecordings(childId).where((r) => r.dateKey == dateKey).toList();
+    list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return list;
+  }
+
+  /// 某孩子绑定到指定习惯的录音
+  List<Recording> getRecordingsForHabit(String habitId, String childId) =>
+      getRecordings(childId).where((r) => r.habitId == habitId).toList();
+
+  /// 今日录音条数
+  int getTodayRecordingCount(String childId, {DateTime? day}) {
+    final key = HabitCheckIn.keyOf(day ?? DateTime.now());
+    return getRecordingsOn(childId, key).length;
+  }
+
+  /// 累计录音条数（含全部历史）
+  int getTotalRecordingCount(String childId) => getRecordings(childId).length;
+
+  /// 累计有效朗读分钟数（仅统计达到 [Recording.minValidDurationMs] 的录音）
+  int getTotalReadingMinutes(String childId) {
+    final ms = getRecordings(childId)
+        .where((r) => r.isValidReading)
+        .fold(0, (sum, r) => sum + r.durationMs);
+    return ms ~/ 60000;
+  }
+
+  Future<void> saveRecording(Recording recording) =>
+      recordings.put(recording.id, recording);
+
+  Future<void> deleteRecording(String recordingId) =>
+      recordings.delete(recordingId);
+
+  // ==================== 成就进度 ====================
+
+  /// 重算某孩子的全部勋章进度（幂等）
+  ///
+  /// 设计要点：
+  /// - 以 [ChildAchievement] 为**派生数据**，全部由业务表实时推导，
+  ///   避免各处埋点上锁导致的遗漏；
+  /// - 只在新解锁时写库并回调 [onUnlock]（用于发放奖励 + 播报台词）；
+  /// - 未达成的勋章仅在进度发生变化时写库，减少 Hive 写入。
+  ///
+  /// 返回本次**新解锁**的勋章定义列表（调用方可据此发奖励）。
+  Future<List<AchievementDef>> refreshAchievements(
+    String childId, {
+    void Function(AchievementDef def, ChildAchievement progress)? onUnlock,
+  }) async {
+    final defs = achievementDefs.values.cast<AchievementDef>().toList();
+    if (defs.isEmpty) return const [];
+
+    // 已有进度行索引
+    final existing = <String, ChildAchievement>{};
+    for (final p in childAchievements.values.cast<ChildAchievement>()) {
+      if (p.childId == childId) existing[p.achievementId] = p;
+    }
+
+    final newlyUnlocked = <AchievementDef>[];
+
+    for (final def in defs) {
+      final value = achievementProgressValue(childId, def);
+      final prev = existing[def.id];
+
+      final wasUnlocked = prev?.isUnlocked ?? false;
+      final isNowUnlocked = value >= def.conditionValue && def.conditionValue > 0;
+
+      final progress = (prev ??
+              ChildAchievement(
+                id: newId('ach_'),
+                childId: childId,
+                achievementId: def.id,
+              ))
+          .copyWith(
+        currentProgress: value,
+        isUnlocked: wasUnlocked || isNowUnlocked,
+        unlockedAt: (wasUnlocked || isNowUnlocked)
+            ? (prev?.unlockedAt ?? DateTime.now())
+            : prev?.unlockedAt,
+      );
+
+      // 未解锁且进度未变 → 跳过写入
+      final changed = prev == null ||
+          prev.currentProgress != value ||
+          prev.isUnlocked != progress.isUnlocked;
+      if (!changed) continue;
+
+      await childAchievements.put(progress.id, progress);
+
+      if (isNowUnlocked && !wasUnlocked) {
+        newlyUnlocked.add(def);
+        onUnlock?.call(def, progress);
+      }
+    }
+
+    return newlyUnlocked;
+  }
+
+  /// 计算某勋章当前进度值（按 [AchievementDef.conditionType] 分派）
+  int achievementProgressValue(String childId, AchievementDef def) {
+    switch (def.conditionType) {
+      case AchievementConditionType.totalTaskDone:
+        return tasks.values
+            .cast<Task>()
+            .where((t) => t.childId == childId && t.isDone)
+            .length;
+
+      case AchievementConditionType.totalCheckIn:
+        return checkIns.values
+            .cast<HabitCheckIn>()
+            .where((c) => c.childId == childId)
+            .length;
+
+      case AchievementConditionType.maxHabitStreak:
+        final streaks = habits.values
+            .cast<Habit>()
+            .where((h) => h.childId == childId)
+            .map((h) => h.bestStreakDays)
+            .toList();
+        return streaks.isEmpty
+            ? 0
+            : streaks.reduce((a, b) => a > b ? a : b);
+
+      case AchievementConditionType.totalPomodoro:
+        return pomodoroSessions.values
+            .cast<PomodoroSession>()
+            .where((s) => s.childId == childId && s.isCompleted)
+            .length;
+
+      case AchievementConditionType.totalStudyMinutes:
+        return pomodoroSessions.values
+            .cast<PomodoroSession>()
+            .where((s) => s.childId == childId && s.isCompleted)
+            .fold(0, (sum, s) => sum + s.actualMinutes);
+
+      case AchievementConditionType.totalExchange:
+        return exchangeLogs.values
+            .cast<ExchangeLog>()
+            .where((e) => e.childId == childId)
+            .length;
+
+      case AchievementConditionType.maxPetLevel:
+        final levels = pets.values
+            .cast<Pet>()
+            .where((p) => p.childId == childId)
+            .map((p) => p.level)
+            .toList();
+        return levels.isEmpty ? 0 : levels.reduce((a, b) => a > b ? a : b);
+
+      case AchievementConditionType.usageDays:
+        return _usageDaysOf(childId);
+
+      case AchievementConditionType.totalRecording:
+        return getTotalRecordingCount(childId);
+
+      case AchievementConditionType.totalReadingMinutes:
+        return getTotalReadingMinutes(childId);
+
+      default:
+        return 0;
+    }
+  }
+
+  /// 使用天数：所有业务表中出现过的最早日期 → 今天，跨自然日计数（含首日）
+  int _usageDaysOf(String childId) {
+    DateTime? earliest;
+    void consider(DateTime? dt) {
+      if (dt == null) return;
+      if (earliest == null || dt.isBefore(earliest!)) earliest = dt;
+    }
+
+    for (final t in tasks.values.cast<Task>()) {
+      if (t.childId != childId) continue;
+      consider(t.createdAt);
+      consider(t.completedAt);
+    }
+    for (final h in habits.values.cast<Habit>()) {
+      if (h.childId != childId) continue;
+      consider(h.startDate);
+      consider(h.lastCheckInTime);
+    }
+    for (final c in checkIns.values.cast<HabitCheckIn>()) {
+      if (c.childId != childId) continue;
+      consider(c.checkInTime);
+    }
+    for (final s in pomodoroSessions.values.cast<PomodoroSession>()) {
+      if (s.childId != childId) continue;
+      consider(s.startTime);
+    }
+    for (final r in recordings.values.cast<Recording>()) {
+      if (r.childId != childId) continue;
+      consider(r.createdAt);
+    }
+
+    if (earliest == null) return 0;
+    final a = DateTime(earliest!.year, earliest!.month, earliest!.day);
+    final now = DateTime.now();
+    final b = DateTime(now.year, now.month, now.day);
+    return b.difference(a).inDays + 1;
+  }
+
   // ==================== 家长 PIN ====================
 
   /// 生成随机盐值
@@ -670,6 +887,25 @@ class DatabaseService {
         category: AchievementCategory.knowledge, iconEmoji: '🎓',
         conditionType: AchievementConditionType.totalTaskDone,
         conditionValue: 100, rewardValue: 300, sortOrder: 2,
+      ),
+      // ---------- 知识 · 朗读打卡 ----------
+      AchievementDef(
+        id: 'ach_read_1', name: '小小朗读者', description: '完成首次朗读录音',
+        category: AchievementCategory.knowledge, iconEmoji: '🎤',
+        conditionType: AchievementConditionType.totalRecording,
+        conditionValue: 1, rewardValue: 20, sortOrder: 3,
+      ),
+      AchievementDef(
+        id: 'ach_read_2', name: '朗读小达人', description: '累计朗读 20 次',
+        category: AchievementCategory.knowledge, iconEmoji: '🔊',
+        conditionType: AchievementConditionType.totalRecording,
+        conditionValue: 20, rewardValue: 120, sortOrder: 4,
+      ),
+      AchievementDef(
+        id: 'ach_read_3', name: '金话筒', description: '累计朗读 60 分钟',
+        category: AchievementCategory.knowledge, iconEmoji: '🏅',
+        conditionType: AchievementConditionType.totalReadingMinutes,
+        conditionValue: 60, rewardValue: 280, sortOrder: 5,
       ),
     ];
     for (final a in list) {
@@ -909,6 +1145,11 @@ class DatabaseService {
       // 升级
       PetDialogue(id: 'dl_levelup', text: '我升级啦！变得更厉害了呢！',
           triggerType: PetDialogueTrigger.levelUp, priority: 100),
+      // 朗读打卡（复用 checkInDone 触发器，优先级低于普通打卡以保证先播常规台词）
+      PetDialogue(id: 'dl_read_ok_1', text: '哇，你读得真好听！我都听入迷啦～',
+          triggerType: PetDialogueTrigger.checkInDone, priority: 68),
+      PetDialogue(id: 'dl_read_ok_2', text: '朗读完成！声音越来越有感情了呢～',
+          triggerType: PetDialogueTrigger.checkInDone, priority: 66),
     ];
     for (final d in list) {
       await petDialogues.put(d.id, d);
