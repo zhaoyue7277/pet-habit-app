@@ -367,7 +367,8 @@ class PomodoroController extends Notifier<PomodoroState>
       clearPendingExit: true,
     );
     // 番茄钟完成会推进「专注次数 / 学习时长 / 宠物等级」类勋章进度
-    if (childId != null) await _db.refreshAchievements(childId);
+    // 注：上方 314 行已对 childId 做过 null 守卫并提前 return，此处必非空。
+    await _db.refreshAchievements(childId);
     ref.read(dataRevisionProvider.notifier).bump();
 
     return PomodoroOutcome(
