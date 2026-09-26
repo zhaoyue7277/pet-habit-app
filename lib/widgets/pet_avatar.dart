@@ -32,11 +32,8 @@ class PetAvatar extends StatefulWidget {
   ///
   /// v1.4.0：`AppSizes.petHomeSize` 已从 `static const` 改为动态 getter，
   /// 不能再用作**默认参数值**（必须编译期常量），故此处默认 `null`，
-  /// 统一由 [_size] 兜底解析。
+  /// 统一由 `_PetAvatarState._size` 兜底解析。
   final double? size;
-
-  /// 解析后的实际显示尺寸
-  double get _size => size ?? AppSizes.petHomeSize;
 
   /// 情绪状态（影响表情与颜色）
   final PetMoodState moodState;
@@ -70,6 +67,9 @@ class _PetAvatarState extends State<PetAvatar>
   late AnimationController _jumpController;
   late AnimationController _spinController;
   late AnimationController _glowController;
+
+  /// 解析后的实际显示尺寸（widget.size 为空时回落到全局默认值）
+  double get _size => widget.size ?? AppSizes.petHomeSize;
 
   @override
   void initState() {
