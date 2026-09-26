@@ -14,7 +14,7 @@ class CoinLabel extends StatelessWidget {
     required this.type,
     required this.amount,
     this.showPlus = false,
-    this.fontSize = AppSizes.fontBody,
+    this.fontSize,
   });
 
   final RewardType type;
@@ -23,20 +23,21 @@ class CoinLabel extends StatelessWidget {
   /// 是否显示 + 号（用于展示「获得」而非「持有」）
   final bool showPlus;
 
-  final double fontSize;
+  final double? fontSize;
 
   @override
   Widget build(BuildContext context) {
     final (emoji, color) = _styleOf(type);
+    final fs = fontSize ?? AppSizes.fontBody;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(emoji, style: TextStyle(fontSize: fontSize)),
+        Text(emoji, style: TextStyle(fontSize: fs)),
         SizedBox(width: AppSizes.spaceXs),
         Text(
           '${showPlus && amount > 0 ? '+' : ''}$amount',
           style: TextStyle(
-            fontSize: fontSize,
+            fontSize: fs,
             fontWeight: FontWeight.w700,
             color: color,
           ),
@@ -62,27 +63,27 @@ class AppCard extends StatelessWidget {
   AppCard({
     super.key,
     required this.child,
-    this.padding = EdgeInsets.all(AppSizes.spaceLg),
+    this.padding,
     this.color,
     this.onTap,
-    this.radius = AppSizes.cardRadius,
+    this.radius,
     this.showShadow = true,
   });
 
   final Widget child;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
   final Color? color;
   final VoidCallback? onTap;
-  final double radius;
+  final double? radius;
   final bool showShadow;
 
   @override
   Widget build(BuildContext context) {
     final content = Container(
-      padding: padding,
+      padding: padding ?? EdgeInsets.all(AppSizes.spaceLg),
       decoration: BoxDecoration(
         color: color ?? AppColors.surface,
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: BorderRadius.circular(radius ?? AppSizes.cardRadius),
         boxShadow: showShadow ? AppShadows.card : null,
       ),
       child: child,
@@ -151,17 +152,17 @@ class BouncyButton extends StatefulWidget {
     required this.child,
     required this.onPressed,
     this.color,
-    this.height = AppSizes.buttonHeight,
+    this.height,
     this.width,
-    this.radius = AppSizes.radiusCircle,
+    this.radius,
   });
 
   final Widget child;
   final VoidCallback? onPressed;
   final Color? color;
-  final double height;
+  final double? height;
   final double? width;
-  final double radius;
+  final double? radius;
 
   @override
   State<BouncyButton> createState() => _BouncyButtonState();
@@ -207,7 +208,7 @@ class _BouncyButtonState extends State<BouncyButton>
         scale: _scale,
         child: Container(
           width: widget.width,
-          height: widget.height,
+          height: widget.height ?? AppSizes.buttonHeight,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             // v2：同色系渐变（替代 v1 的「主色→辅色」跨色渐变，避免蓝橙混色发灰）
@@ -227,7 +228,7 @@ class _BouncyButtonState extends State<BouncyButton>
                   )
                 : null,
             color: enabled ? null : AppColors.divider,
-            borderRadius: BorderRadius.circular(widget.radius),
+            borderRadius: BorderRadius.circular(widget.radius ?? AppSizes.radiusCircle),
             boxShadow: enabled ? AppShadows.button : null,
           ),
           // 注意：这里必须显式 merge 主题字体。
@@ -259,23 +260,24 @@ class TagChip extends StatelessWidget {
     required this.text,
     this.color,
     this.textColor,
-    this.fontSize = AppSizes.fontCaption,
-    this.padding = EdgeInsets.symmetric(
-      horizontal: AppSizes.spaceMd,
-      vertical: AppSizes.spaceXs,
-    ),
+    this.fontSize,
+    this.padding,
   });
 
   final String text;
   final Color? color;
   final Color? textColor;
-  final double fontSize;
-  final EdgeInsetsGeometry padding;
+  final double? fontSize;
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: padding,
+      padding: padding ??
+          EdgeInsets.symmetric(
+            horizontal: AppSizes.spaceMd,
+            vertical: AppSizes.spaceXs,
+          ),
       decoration: BoxDecoration(
         color: color ?? AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(AppSizes.radiusCircle),
@@ -283,7 +285,7 @@ class TagChip extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: fontSize,
+          fontSize: fontSize ?? AppSizes.fontCaption,
           fontWeight: FontWeight.w700,
           color: textColor ?? AppColors.textPrimary,
         ),
