@@ -103,21 +103,26 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
       var tracking = false;
 
       el.addEventListener('pointerdown', (event) {
-        // 注意：dart:html 里 clientX/clientY 定义在 MouseEvent 上
-        // （PointerEvent 继承自它，但静态类型下 analyzer 只认 MouseEvent，
-        //  写 html.PointerEvent 会报 undefined_getter）。
-        final pe = event as html.MouseEvent;
+        // 【踩坑记录 v1.3.0】dart:html 的 MouseEvent **没有**公开的
+        // clientX / clientY getter —— 它只暴露：
+        //   · 私有 `_clientX` / `_clientY`（@JSName 映射，外部不可用）
+        //   · 公开的 `Point get client`（即 client.x / client.y）
+        // PointerEvent 虽然 extends MouseEvent，但同样没有公开 clientX。
+        // 所以正确写法是取 `.client` 这个 Point。
+        final me = event as html.MouseEvent;
+        final p = me.client;
         tracking = true;
-        downX = pe.clientX.toDouble();
-        downY = pe.clientY.toDouble();
+        downX = p.x.toDouble();
+        downY = p.y.toDouble();
         downAt = DateTime.now().millisecondsSinceEpoch;
       });
       el.addEventListener('pointerup', (event) {
         if (!tracking) return;
         tracking = false;
-        final pe = event as html.MouseEvent;
-        final dx = (pe.clientX - downX).abs();
-        final dy = (pe.clientY - downY).abs();
+        final me = event as html.MouseEvent;
+        final p = me.client;
+        final dx = (p.x - downX).abs();
+        final dy = (p.y - downY).abs();
         final dt = DateTime.now().millisecondsSinceEpoch - downAt;
         if (dx > tapMoveTolerance || dy > tapMoveTolerance) return;
         if (dt > tapTimeLimit) return;
