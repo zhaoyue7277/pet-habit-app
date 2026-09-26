@@ -129,6 +129,8 @@ class AppRoutes {
   static const String exchangeLogs = '/exchange-logs';
   static const String parentSettings = '/parent-settings';
   static const String recording = '/recording';
+  static const String checkInVerify = '/check-in-verify';
+  static const String learningReport = '/learning-report';
 }
 
 /// 路由表（使用 onGenerateRoute 统一生成，保证全页面都带左滑手势）
