@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../providers/core_providers.dart';
 import '../providers/habit_providers.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_scale.dart';
 import '../theme/app_sizes.dart';
 import '../widgets/common_widgets.dart';
 
@@ -97,12 +98,12 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
         title: Text(_isEditing ? '编辑习惯' : '创建新习惯'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: AppSizes.spaceLg),
+            padding: EdgeInsets.only(right: AppSizes.spaceLg),
             child: Center(
               child: GestureDetector(
                 onTap: () => _save(child),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: AppSizes.spaceXl,
                     vertical: AppSizes.spaceSm,
                   ),
@@ -112,7 +113,7 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
                     ),
                     borderRadius: BorderRadius.circular(AppSizes.radiusCircle),
                   ),
-                  child: const Text(
+                  child: Text(
                     '完成',
                     style: TextStyle(
                       fontSize: AppSizes.fontLabel,
@@ -129,33 +130,33 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
       body: child == null
           ? const EmptyPlaceholder(emoji: '🐣', text: '请先创建小朋友档案')
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSizes.spaceLg),
+              padding: EdgeInsets.all(AppSizes.spaceLg),
               child: Column(
                 children: [
                   // ---------- 名称 + 习惯库 ----------
                   _buildNameCard(),
 
-                  const SizedBox(height: AppSizes.spaceLg),
+                  SizedBox(height: AppSizes.spaceLg),
 
                   // ---------- 基础设置 ----------
                   _buildSettingsCard(),
 
-                  const SizedBox(height: AppSizes.spaceLg),
+                  SizedBox(height: AppSizes.spaceLg),
 
                   // ---------- 起止时间 ----------
                   _buildDateRangeCard(),
 
-                  const SizedBox(height: AppSizes.spaceLg),
+                  SizedBox(height: AppSizes.spaceLg),
 
                   // ---------- 打卡奖励 + 打卡方式 ----------
                   _buildRewardCard(),
 
-                  const SizedBox(height: AppSizes.spaceLg),
+                  SizedBox(height: AppSizes.spaceLg),
 
                   // ---------- 目标奖励 ----------
                   _buildStreakRewardCard(),
 
-                  const SizedBox(height: AppSizes.spaceXxl),
+                  SizedBox(height: AppSizes.spaceXxl),
                 ],
               ),
             ),
@@ -180,11 +181,11 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
                 ),
                 child: Text(_iconEmoji, style: const TextStyle(fontSize: 26)),
               ),
-              const SizedBox(width: AppSizes.spaceMd),
+              SizedBox(width: AppSizes.spaceMd),
               Expanded(
                 child: TextField(
                   controller: _nameController,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSizes.fontBody,
                     fontWeight: FontWeight.w600,
                   ),
@@ -202,7 +203,7 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
               GestureDetector(
                 onTap: _showHabitLibrary,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: AppSizes.spaceMd,
                     vertical: AppSizes.spaceSm,
                   ),
@@ -210,7 +211,7 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
                     borderRadius: BorderRadius.circular(AppSizes.radiusCircle),
                     border: Border.all(color: AppColors.secondary, width: 1.5),
                   ),
-                  child: const Text(
+                  child: Text(
                     '习惯库 ›',
                     style: TextStyle(
                       fontSize: AppSizes.fontCaption,
@@ -238,7 +239,7 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
             '$_dailyTargetCount 次',
             onTap: _pickDailyCount,
           ),
-          const Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
+          Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
           _settingRow(
             '打卡时段',
             _timeSlots.isEmpty
@@ -246,7 +247,7 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
                 : _timeSlots.map((e) => e.label).join('、'),
             onTap: _pickTimeSlots,
           ),
-          const Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
+          Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
           _settingRow(
             '打卡频率',
             _frequency == HabitFrequency.weekly
@@ -273,12 +274,12 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
             child: GestureDetector(
               onTap: () => _pickStartDate(),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   vertical: AppSizes.spaceLg,
                 ),
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       '开始时间',
                       style: TextStyle(
                         fontSize: AppSizes.fontLabel,
@@ -286,19 +287,19 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: AppSizes.spaceXs),
+                    SizedBox(height: AppSizes.spaceXs),
                     Text(
                       '${_startDate.month}月${_startDate.day}日',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontBody,
                         fontWeight: FontWeight.w800,
                         color: AppColors.secondary,
                       ),
                     ),
-                    const SizedBox(height: AppSizes.spaceXs),
+                    SizedBox(height: AppSizes.spaceXs),
                     Text(
                       _isToday(_startDate) ? '今天' : '',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontCaption,
                         color: AppColors.textSecondary,
                       ),
@@ -320,12 +321,12 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
             child: GestureDetector(
               onTap: _pickEndDate,
               child: Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   vertical: AppSizes.spaceLg,
                 ),
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       '结束时间',
                       style: TextStyle(
                         fontSize: AppSizes.fontLabel,
@@ -333,21 +334,21 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: AppSizes.spaceXs),
+                    SizedBox(height: AppSizes.spaceXs),
                     Text(
                       _endDate == null
                           ? '不限'
                           : '${_endDate!.month}月${_endDate!.day}日',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontBody,
                         fontWeight: FontWeight.w800,
                         color: AppColors.secondary,
                       ),
                     ),
-                    const SizedBox(height: AppSizes.spaceXs),
+                    SizedBox(height: AppSizes.spaceXs),
                     Text(
                       _endDate == null ? '长期' : '',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontCaption,
                         color: AppColors.textSecondary,
                       ),
@@ -369,13 +370,13 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(
+            padding: EdgeInsets.symmetric(
               horizontal: AppSizes.spaceLg,
               vertical: AppSizes.spaceMd,
             ),
             child: Row(
               children: [
-                const Text(
+                Text(
                   '打卡奖励',
                   style: TextStyle(
                     fontSize: AppSizes.fontBody,
@@ -403,7 +404,7 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
               ],
             ),
           ),
-          const Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
+          Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
           _settingRow('打卡方式', _checkInMode.label, onTap: _pickCheckInMode),
         ],
       ),
@@ -418,15 +419,15 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
         children: [
           // 开关行
           Padding(
-            padding: const EdgeInsets.symmetric(
+            padding: EdgeInsets.symmetric(
               horizontal: AppSizes.spaceLg,
               vertical: AppSizes.spaceMd,
             ),
             child: Row(
               children: [
                 const Text('🏆', style: TextStyle(fontSize: 20)),
-                const SizedBox(width: AppSizes.spaceSm),
-                const Text(
+                SizedBox(width: AppSizes.spaceSm),
+                Text(
                   '开启目标奖励',
                   style: TextStyle(
                     fontSize: AppSizes.fontBody,
@@ -444,23 +445,23 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
           ),
 
           if (_enableStreakReward) ...[
-            const Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
+            Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
             _settingRow(
               '获得奖励条件',
               '连续打卡 $_targetStreakDays 天',
               onTap: _pickStreakDays,
             ),
-            const Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
+            Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
 
             // 奖励类型切换
             Padding(
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                 horizontal: AppSizes.spaceLg,
                 vertical: AppSizes.spaceMd,
               ),
               child: Row(
                 children: [
-                  const Text(
+                  Text(
                     '奖励类型',
                     style: TextStyle(
                       fontSize: AppSizes.fontBody,
@@ -482,17 +483,17 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
               ),
             ),
 
-            const Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
+            Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
 
             // 奖励数值
             Padding(
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                 horizontal: AppSizes.spaceLg,
                 vertical: AppSizes.spaceMd,
               ),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -524,7 +525,7 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
               ),
             ),
 
-            const Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
+            Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
             _settingRow('奖励时效', _rewardValidity.label, onTap: _pickRewardValidity),
           ],
         ],
@@ -538,7 +539,7 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
+        padding: EdgeInsets.symmetric(
           horizontal: AppSizes.spaceLg,
           vertical: AppSizes.spaceLg,
         ),
@@ -546,7 +547,7 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontBody,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -555,13 +556,13 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
             const Spacer(),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontBody,
                 color: AppColors.textSecondary,
               ),
             ),
             if (onTap != null) ...[
-              const SizedBox(width: AppSizes.spaceXs),
+              SizedBox(width: AppSizes.spaceXs),
               const Icon(
                 Icons.chevron_right_rounded,
                 color: AppColors.textHint,
@@ -583,7 +584,7 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
     VoidCallback? onEmojiTap,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(
+      padding: EdgeInsets.symmetric(
         horizontal: AppSizes.spaceSm,
         vertical: AppSizes.spaceXs,
       ),
@@ -595,21 +596,21 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _stepperBtn(icon: Icons.remove_rounded, onTap: onDecrease),
-          const SizedBox(width: AppSizes.spaceSm),
+          SizedBox(width: AppSizes.spaceSm),
           Text(
             '$value',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: AppSizes.fontBody,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(width: AppSizes.spaceSm),
+          SizedBox(width: AppSizes.spaceSm),
           GestureDetector(
             onTap: onEmojiTap,
             child: Text(emoji, style: const TextStyle(fontSize: 18)),
           ),
-          const SizedBox(width: AppSizes.spaceSm),
+          SizedBox(width: AppSizes.spaceSm),
           _stepperBtn(icon: Icons.add_rounded, onTap: onIncrease),
         ],
       ),
@@ -652,7 +653,7 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
             onTap: () => onChanged(i),
             child: AnimatedContainer(
               duration: AppSizes.durationFast,
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                 horizontal: AppSizes.spaceMd,
                 vertical: AppSizes.spaceXs,
               ),
@@ -733,8 +734,8 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
                   setState(() {});
                 },
                 child: Container(
-                  margin: const EdgeInsets.only(bottom: AppSizes.spaceSm),
-                  padding: const EdgeInsets.all(AppSizes.spaceLg),
+                  margin: EdgeInsets.only(bottom: AppSizes.spaceSm),
+                  padding: EdgeInsets.all(AppSizes.spaceLg),
                   decoration: BoxDecoration(
                     color: selected
                         ? AppColors.primary.withValues(alpha: 0.15)
@@ -747,10 +748,10 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
                   child: Row(
                     children: [
                       Text(slot.emoji, style: const TextStyle(fontSize: 22)),
-                      const SizedBox(width: AppSizes.spaceMd),
+                      SizedBox(width: AppSizes.spaceMd),
                       Text(
                         slot.label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: AppSizes.fontBody,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -833,8 +834,8 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
                 Navigator.pop(ctx);
               },
               child: Container(
-                margin: const EdgeInsets.only(bottom: AppSizes.spaceSm),
-                padding: const EdgeInsets.all(AppSizes.spaceLg),
+                margin: EdgeInsets.only(bottom: AppSizes.spaceSm),
+                padding: EdgeInsets.all(AppSizes.spaceLg),
                 decoration: BoxDecoration(
                   color: selected
                       ? AppColors.primary.withValues(alpha: 0.15)
@@ -845,7 +846,7 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
                   children: [
                     Text(
                       options[i],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontBody,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
@@ -875,8 +876,8 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
       ),
-      margin: const EdgeInsets.all(AppSizes.spaceLg),
-      padding: const EdgeInsets.all(AppSizes.spaceXl),
+      margin: EdgeInsets.all(AppSizes.spaceLg),
+      padding: EdgeInsets.all(AppSizes.spaceXl),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -886,23 +887,23 @@ class _HabitEditPageState extends ConsumerState<HabitEditPage> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: AppSizes.fontHeadline,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
             ),
           ),
           if (subtitle != null) ...[
-            const SizedBox(height: AppSizes.spaceXs),
+            SizedBox(height: AppSizes.spaceXs),
             Text(
               subtitle,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontCaption,
                 color: AppColors.textHint,
               ),
             ),
           ],
-          const SizedBox(height: AppSizes.spaceXl),
+          SizedBox(height: AppSizes.spaceXl),
           Flexible(child: SingleChildScrollView(child: child)),
         ],
       ),
@@ -1061,8 +1062,8 @@ class _HabitLibrarySheetState extends ConsumerState<_HabitLibrarySheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.8,
       ),
-      margin: const EdgeInsets.all(AppSizes.spaceLg),
-      padding: const EdgeInsets.all(AppSizes.spaceXl),
+      margin: EdgeInsets.all(AppSizes.spaceLg),
+      padding: EdgeInsets.all(AppSizes.spaceXl),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -1070,7 +1071,7 @@ class _HabitLibrarySheetState extends ConsumerState<_HabitLibrarySheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
+          Text(
             '习惯库',
             style: TextStyle(
               fontSize: AppSizes.fontTitle,
@@ -1078,7 +1079,7 @@ class _HabitLibrarySheetState extends ConsumerState<_HabitLibrarySheet> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: AppSizes.spaceLg),
+          SizedBox(height: AppSizes.spaceLg),
 
           // ---------- 分类 Tab ----------
           Row(
@@ -1086,14 +1087,14 @@ class _HabitLibrarySheetState extends ConsumerState<_HabitLibrarySheet> {
               final selected = _category == cat;
               return Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: AppSizes.spaceXs,
                   ),
                   child: GestureDetector(
                     onTap: () => setState(() => _category = cat),
                     child: AnimatedContainer(
                       duration: AppSizes.durationFast,
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         vertical: AppSizes.spaceSm,
                       ),
                       alignment: Alignment.center,
@@ -1121,17 +1122,33 @@ class _HabitLibrarySheetState extends ConsumerState<_HabitLibrarySheet> {
             }).toList(),
           ),
 
-          const SizedBox(height: AppSizes.spaceLg),
+          SizedBox(height: AppSizes.spaceLg),
 
           // ---------- 习惯网格 ----------
+          //
+          // 【v1.4.0 修复「文字显示不全」】
+          //
+          // 旧写法写死 crossAxisCount: 4 + childAspectRatio: 0.8，在窄屏上
+          // 每个格子只有约 68px 宽 —— 「课外阅读」这种 4 字名会被压成
+          // 「课外…」。这不是字号的锅，是「格子宽度不够」。
+          //
+          // 三处改动：
+          //   1. 列数按屏宽分档（窄屏 3 列 / 常规 4 列 / 宽屏 5 列），
+          //      从根上给每个格子留出足够宽度；
+          //   2. 文字允许换行到 2 行（maxLines: 2），不再 ellipsis；
+          //   3. 格子高宽比放宽到 0.78（略高），给换行留出垂直空间。
           Flexible(
             child: GridView.builder(
               shrinkWrap: true,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: AppScale.columnsFor(
+                  narrowColumns: 3,
+                  normalColumns: 4,
+                  wideColumns: 5,
+                ),
                 mainAxisSpacing: AppSizes.spaceLg,
                 crossAxisSpacing: AppSizes.spaceMd,
-                childAspectRatio: 0.8,
+                childAspectRatio: 0.78,
               ),
               itemCount: templates.length,
               itemBuilder: (context, i) {
@@ -1139,10 +1156,12 @@ class _HabitLibrarySheetState extends ConsumerState<_HabitLibrarySheet> {
                 return GestureDetector(
                   onTap: () => widget.onSelected(t),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 52,
-                        height: 52,
+                        // 图标圈随屏幕缩放（原写死 52）
+                        width: AppScale.s(52),
+                        height: AppScale.s(52),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: AppColors.primaryLight
@@ -1151,18 +1170,23 @@ class _HabitLibrarySheetState extends ConsumerState<_HabitLibrarySheet> {
                         ),
                         child: Text(
                           t.iconEmoji,
-                          style: const TextStyle(fontSize: 26),
+                          style: TextStyle(fontSize: AppScale.s(26)),
                         ),
                       ),
-                      const SizedBox(height: AppSizes.spaceSm),
-                      Text(
-                        t.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: AppSizes.fontCaption,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                      SizedBox(height: AppSizes.spaceSm),
+                      // 允许换 2 行，彻底告别「课外…」
+                      Flexible(
+                        child: Text(
+                          t.name,
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: AppSizes.fontCaption,
+                            height: 1.2,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
                     ],
@@ -1172,7 +1196,7 @@ class _HabitLibrarySheetState extends ConsumerState<_HabitLibrarySheet> {
             ),
           ),
 
-          const SizedBox(height: AppSizes.spaceMd),
+          SizedBox(height: AppSizes.spaceMd),
 
           // ---------- 取消按钮 ----------
           BouncyButton(
