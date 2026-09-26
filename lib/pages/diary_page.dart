@@ -72,23 +72,23 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
         title: const Text('打卡日记'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceLg),
         child: Column(
           children: [
             // ---------- 日历 ----------
             _buildCalendar(child.id),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 当日完成任务 ----------
             _buildDayTasks(child.id),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 家长备注 ----------
             _buildNoteSection(child.id, dateKey),
 
-            const SizedBox(height: AppSizes.spaceXxl),
+            SizedBox(height: AppSizes.spaceXxl),
           ],
         ),
       ),
@@ -124,7 +124,7 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
                 child: Center(
                   child: Text(
                     '${_currentMonth.year}年${_currentMonth.month}月',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: AppSizes.fontHeadline,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
@@ -142,7 +142,7 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
             ],
           ),
 
-          const SizedBox(height: AppSizes.spaceSm),
+          SizedBox(height: AppSizes.spaceSm),
 
           // ---------- 星期表头 ----------
           Row(
@@ -151,7 +151,7 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
                       child: Center(
                         child: Text(
                           d,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: AppSizes.fontCaption,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textSecondary,
@@ -162,13 +162,13 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
                 .toList(),
           ),
 
-          const SizedBox(height: AppSizes.spaceSm),
+          SizedBox(height: AppSizes.spaceSm),
 
           // ---------- 日期网格 ----------
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
               mainAxisSpacing: AppSizes.spaceXs,
               crossAxisSpacing: AppSizes.spaceXs,
@@ -282,7 +282,7 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
                   '${_selectedDate.month}月${_selectedDate.day}日',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSizes.fontHeadline,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
@@ -297,7 +297,7 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
                   textColor: AppColors.primaryDark,
                 ),
               if (recordings.isNotEmpty) ...[
-                if (minutes > 0) const SizedBox(width: AppSizes.spaceXs),
+                if (minutes > 0) SizedBox(width: AppSizes.spaceXs),
                 TagChip(
                   text: '🎤 朗读 ${recordings.length} 次',
                   color: AppColors.success.withValues(alpha: 0.18),
@@ -306,10 +306,10 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
               ],
             ],
           ),
-          const SizedBox(height: AppSizes.spaceLg),
+          SizedBox(height: AppSizes.spaceLg),
 
           if (doneTasks.isEmpty && checkIns.isEmpty && recordings.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: AppSizes.spaceLg),
               child: Center(
                 child: Text(
@@ -324,15 +324,15 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
           else ...[
             // 完成的任务
             ...doneTasks.map((t) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSizes.spaceSm),
+                  padding: EdgeInsets.only(bottom: AppSizes.spaceSm),
                   child: Row(
                     children: [
                       const Text('✅', style: TextStyle(fontSize: 16)),
-                      const SizedBox(width: AppSizes.spaceSm),
+                      SizedBox(width: AppSizes.spaceSm),
                       Expanded(
                         child: Text(
                           t.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: AppSizes.fontBody,
                             color: AppColors.textPrimary,
                           ),
@@ -340,7 +340,7 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
                       ),
                       Text(
                         '${t.rewardType.emoji}+${t.rewardValue}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: AppSizes.fontCaption,
                           fontWeight: FontWeight.w700,
                           color: AppColors.accentDark,
@@ -354,18 +354,18 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
             ...checkIns.map((c) {
               final habit = db.habits.get(c.habitId) as Habit?;
               return Padding(
-                padding: const EdgeInsets.only(bottom: AppSizes.spaceSm),
+                padding: EdgeInsets.only(bottom: AppSizes.spaceSm),
                 child: Row(
                   children: [
                     Text(
                       habit?.iconEmoji ?? '🔥',
                       style: const TextStyle(fontSize: 16),
                     ),
-                    const SizedBox(width: AppSizes.spaceSm),
+                    SizedBox(width: AppSizes.spaceSm),
                     Expanded(
                       child: Text(
                         habit?.name ?? '习惯打卡',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: AppSizes.fontBody,
                           color: AppColors.textPrimary,
                         ),
@@ -374,7 +374,7 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
                     Text(
                       '${c.checkInTime.hour.toString().padLeft(2, '0')}:'
                       '${c.checkInTime.minute.toString().padLeft(2, '0')}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontCaption,
                         color: AppColors.textHint,
                       ),
@@ -405,8 +405,8 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
           Row(
             children: [
               const Text('✍️', style: TextStyle(fontSize: 20)),
-              const SizedBox(width: AppSizes.spaceSm),
-              const Text(
+              SizedBox(width: AppSizes.spaceSm),
+              Text(
                 '家长寄语',
                 style: TextStyle(
                   fontSize: AppSizes.fontHeadline,
@@ -419,7 +419,7 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
               ..._moodEmojis.map((m) => GestureDetector(
                     onTap: () => setState(() => _selectedMood = m),
                     child: Container(
-                      margin: const EdgeInsets.only(left: AppSizes.spaceXs),
+                      margin: EdgeInsets.only(left: AppSizes.spaceXs),
                       padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
                         color: _selectedMood == m
@@ -435,16 +435,16 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
                   )),
             ],
           ),
-          const SizedBox(height: AppSizes.spaceLg),
+          SizedBox(height: AppSizes.spaceLg),
 
           // 输入框
           TextField(
             controller: _noteController,
             maxLines: 4,
-            style: const TextStyle(fontSize: AppSizes.fontBody),
+            style: TextStyle(fontSize: AppSizes.fontBody),
             decoration: InputDecoration(
               hintText: '写点什么鼓励孩子吧～',
-              hintStyle: const TextStyle(
+              hintStyle: TextStyle(
                 fontSize: AppSizes.fontBody,
                 color: AppColors.textHint,
               ),
@@ -456,7 +456,7 @@ class _DiaryPageState extends ConsumerState<DiaryPage> {
               ),
             ),
           ),
-          const SizedBox(height: AppSizes.spaceMd),
+          SizedBox(height: AppSizes.spaceMd),
 
           // 保存按钮
           BouncyButton(
@@ -584,20 +584,20 @@ class _RecordingRowState extends State<_RecordingRow> {
         '${r.createdAt.minute.toString().padLeft(2, '0')}';
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.spaceSm),
+      padding: EdgeInsets.only(bottom: AppSizes.spaceSm),
       child: GestureDetector(
         onTap: _toggle,
         behavior: HitTestBehavior.opaque,
         child: Row(
           children: [
             const Text('🎤', style: TextStyle(fontSize: 16)),
-            const SizedBox(width: AppSizes.spaceSm),
+            SizedBox(width: AppSizes.spaceSm),
             Expanded(
               child: Text(
                 widget.habitName.isEmpty ? '朗读' : widget.habitName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontBody,
                   color: AppColors.textPrimary,
                 ),
@@ -620,10 +620,10 @@ class _RecordingRowState extends State<_RecordingRow> {
                 color: _playing ? Colors.white : AppColors.success,
               ),
             ),
-            const SizedBox(width: AppSizes.spaceSm),
+            SizedBox(width: AppSizes.spaceSm),
             Text(
               '${r.durationLabel} · $time',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontCaption,
                 color: AppColors.textHint,
               ),
