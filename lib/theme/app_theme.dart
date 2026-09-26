@@ -58,7 +58,7 @@ class AppTheme {
       textTheme: _buildTextTheme(),
 
       // ---------- 应用栏 ----------
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
@@ -81,13 +81,13 @@ class AppTheme {
           foregroundColor: AppColors.textOnPrimary,
           disabledBackgroundColor: AppColors.primaryLight,
           disabledForegroundColor: Colors.white70,
-          minimumSize: const Size(double.infinity, AppSizes.buttonHeight),
+          minimumSize: Size(double.infinity, AppSizes.buttonHeight),
           elevation: 3,
           shadowColor: const Color(0x3D3E92CC),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusMd),
           ),
-          textStyle: const TextStyle(
+          textStyle: TextStyle(
             fontSize: AppSizes.fontBody,
             fontWeight: FontWeight.w700,
           ),
@@ -98,11 +98,11 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.textOnPrimary,
-          minimumSize: const Size(0, AppSizes.buttonHeight),
+          minimumSize: Size(0, AppSizes.buttonHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusMd),
           ),
-          textStyle: const TextStyle(
+          textStyle: TextStyle(
             fontSize: AppSizes.fontBody,
             fontWeight: FontWeight.w700,
           ),
@@ -112,12 +112,12 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primaryDark,
-          minimumSize: const Size(0, AppSizes.buttonHeight),
+          minimumSize: Size(0, AppSizes.buttonHeight),
           side: const BorderSide(color: AppColors.primary, width: 2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusMd),
           ),
-          textStyle: const TextStyle(
+          textStyle: TextStyle(
             fontSize: AppSizes.fontBody,
             fontWeight: FontWeight.w700,
           ),
@@ -127,7 +127,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: const TextStyle(
+          textStyle: TextStyle(
             fontSize: AppSizes.fontLabel,
             fontWeight: FontWeight.w600,
           ),
@@ -150,11 +150,11 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceVariant,
-        contentPadding: const EdgeInsets.symmetric(
+        contentPadding: EdgeInsets.symmetric(
           horizontal: AppSizes.spaceLg,
           vertical: AppSizes.spaceLg,
         ),
-        hintStyle: const TextStyle(
+        hintStyle: TextStyle(
           fontSize: AppSizes.fontBody,
           color: AppColors.textHint,
         ),
@@ -179,18 +179,18 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         ),
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontSize: AppSizes.fontHeadline,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
-        contentTextStyle: const TextStyle(
+        contentTextStyle: TextStyle(
           fontSize: AppSizes.fontBody,
           color: AppColors.textSecondary,
         ),
       ),
 
-      bottomSheetTheme: const BottomSheetThemeData(
+      bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
@@ -204,17 +204,17 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceVariant,
         selectedColor: AppColors.primary,
-        labelStyle: const TextStyle(
+        labelStyle: TextStyle(
           fontSize: AppSizes.fontLabel,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
-        secondaryLabelStyle: const TextStyle(
+        secondaryLabelStyle: TextStyle(
           fontSize: AppSizes.fontLabel,
           fontWeight: FontWeight.w600,
           color: AppColors.textOnPrimary,
         ),
-        padding: const EdgeInsets.symmetric(
+        padding: EdgeInsets.symmetric(
           horizontal: AppSizes.spaceMd,
           vertical: AppSizes.spaceSm,
         ),
@@ -232,7 +232,7 @@ class AppTheme {
       ),
 
       // ---------- 分隔线 ----------
-      dividerTheme: const DividerThemeData(
+      dividerTheme: DividerThemeData(
         color: AppColors.divider,
         thickness: 1,
         space: AppSizes.spaceLg,
@@ -268,7 +268,7 @@ class AppTheme {
 
   /// 构建文字主题
   static TextTheme _buildTextTheme() {
-    return const TextTheme(
+    return TextTheme(
       displayLarge: TextStyle(
         fontSize: AppSizes.fontDisplay,
         fontWeight: FontWeight.w800,
