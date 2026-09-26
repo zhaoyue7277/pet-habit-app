@@ -22,12 +22,16 @@ class Pet3DViewer extends StatefulWidget {
     required this.modelPath,
     this.width,
     this.height,
+    this.onTap,
   });
 
   /// 模型资源路径（相对 base href），如 assets/3d/pet_1.glb
   final String modelPath;
   final double? width;
   final double? height;
+
+  /// 点击模型回调（按位移 + 时长双阈值区分点击与拖拽旋转）
+  final VoidCallback? onTap;
 
   @override
   State<Pet3DViewer> createState() => _Pet3DViewerState();
@@ -58,8 +62,14 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
         ..setAttribute('auto-rotate', '')
         ..setAttribute('camera-controls', '')
         ..setAttribute('disable-pan', '')
+        // v1.3.0：纯水平旋转 —— phi 锁死 90deg（水平正视），theta 完全放开。
+        // 与 assets/3d/viewer.html 保持完全一致，避免两端行为分叉。
+        ..setAttribute('camera-orbit', '0deg 90deg auto')
+        ..setAttribute('min-camera-orbit', '-Infinity 90deg auto')
+        ..setAttribute('max-camera-orbit', 'Infinity 90deg auto')
+        ..setAttribute('interaction-prompt', 'none')
         ..setAttribute('shadow-intensity', '1')
-        ..setAttribute('rotation-per-second', '30deg')
+        ..setAttribute('rotation-per-second', '18deg')
         ..style.width = '100%'
         ..style.height = '100%'
         ..style.backgroundColor = 'transparent';
@@ -79,6 +89,42 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
           _errDetail = '模型加载失败';
         });
       });
+
+      // v1.3.0：点击交互。
+      // Flutter Web 的 HtmlElementView 是真实 DOM，事件直接绑在元素上即可
+      // （不需要像 Android 那样监听 document 捕获阶段 —— 那里是为了
+      //  绕开 InAppWebView 里 model-viewer 的 Shadow DOM 吞事件问题）。
+      // 同样用「位移 + 时长」双阈值区分点击与拖拽旋转。
+      const tapMoveTolerance = 10; // px
+      const tapTimeLimit = 300; // ms
+      var downX = 0.0;
+      var downY = 0.0;
+      var downAt = 0;
+      var tracking = false;
+
+      el.addEventListener('pointerdown', (event) {
+        final pe = event as html.PointerEvent;
+        tracking = true;
+        downX = pe.clientX.toDouble();
+        downY = pe.clientY.toDouble();
+        downAt = DateTime.now().millisecondsSinceEpoch;
+      });
+      el.addEventListener('pointerup', (event) {
+        if (!tracking) return;
+        tracking = false;
+        final pe = event as html.PointerEvent;
+        final dx = (pe.clientX - downX).abs();
+        final dy = (pe.clientY - downY).abs();
+        final dt = DateTime.now().millisecondsSinceEpoch - downAt;
+        if (dx > tapMoveTolerance || dy > tapMoveTolerance) return;
+        if (dt > tapTimeLimit) return;
+        if (!mounted) return;
+        widget.onTap?.call();
+      });
+      el.addEventListener('pointercancel', (event) {
+        tracking = false;
+      });
+
       return el;
     });
   }
