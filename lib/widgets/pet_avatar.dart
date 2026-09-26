@@ -22,6 +22,7 @@ class PetAvatar extends StatefulWidget {
     this.isJumping = false,
     this.isSpinning = false,
     this.showGlow = false,
+    this.onTap,
   });
 
   /// 宠物数据（决定品种颜色）
@@ -41,6 +42,16 @@ class PetAvatar extends StatefulWidget {
 
   /// 是否显示升级闪光
   final bool showGlow;
+
+  /// 点击宠物回调
+  ///
+  /// 【为什么 2D 与 3D 都要这个回调】
+  /// 2D 路径由外层 GestureDetector 直接接管，本来就能收到点击；
+  /// 3D 路径的触摸被 WebView 内的 model-viewer 消费掉了，
+  /// 必须由 viewer.html 判定后经 callHandler 回传，外层 GestureDetector
+  /// 收不到 —— 所以需要在 3D 分支单独接上同一条回调。
+  /// 这样业务层（宠物页）无论宠物是 2D 还是 3D，行为完全一致。
+  final VoidCallback? onTap;
 
   @override
   State<PetAvatar> createState() => _PetAvatarState();
@@ -117,7 +128,9 @@ class _PetAvatarState extends State<PetAvatar>
       return SizedBox(
         width: widget.size,
         height: widget.size,
-        child: Pet3DViewer(modelPath: modelPath),
+        // onTap 透传给 Pet3DViewer：3D 的点击由 WebView 内部判定后回传，
+        // 不经过外层 GestureDetector（触摸被 model-viewer 消费了）。
+        child: Pet3DViewer(modelPath: modelPath, onTap: widget.onTap),
       );
     }
 
