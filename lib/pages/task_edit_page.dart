@@ -98,12 +98,12 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
         title: Text(_isEditing ? '编辑任务' : '新建任务'),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: AppSizes.spaceLg),
+            padding: EdgeInsets.only(right: AppSizes.spaceLg),
             child: Center(
               child: GestureDetector(
                 onTap: _save,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: AppSizes.spaceXl,
                     vertical: AppSizes.spaceSm,
                   ),
@@ -111,7 +111,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(AppSizes.radiusCircle),
                   ),
-                  child: const Text(
+                  child: Text(
                     '完成',
                     style: TextStyle(
                       fontSize: AppSizes.fontLabel,
@@ -126,44 +126,44 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ---------- 标题 + 描述 ----------
             _buildTitleCard(),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 科目 ----------
             _buildSubjectRow(),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 优先级 ----------
             _buildPriorityRow(),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 难度 ----------
             _buildDifficultyRow(),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 日期 ----------
             _buildDateRow(),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 番茄钟开关（核心新增） ----------
             _buildPomodoroSwitch(),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 其他设置 ----------
             _buildOtherSettings(),
 
-            const SizedBox(height: AppSizes.spaceXxl),
+            SizedBox(height: AppSizes.spaceXxl),
           ],
         ),
       ),
@@ -181,7 +181,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
               Expanded(
                 child: TextField(
                   controller: _titleController,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSizes.fontHeadline,
                     fontWeight: FontWeight.w700,
                   ),
@@ -198,7 +198,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
               // 分解任务按钮（对应截图）
               GestureDetector(
                 onTap: _showDecomposeHint,
-                child: const Row(
+                child: Row(
                   children: [
                     Text('✨', style: TextStyle(fontSize: 16)),
                     SizedBox(width: AppSizes.spaceXs),
@@ -215,11 +215,11 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
               ),
             ],
           ),
-          const Divider(height: AppSizes.spaceXl),
+          Divider(height: AppSizes.spaceXl),
           TextField(
             controller: _descController,
             maxLines: 3,
-            style: const TextStyle(fontSize: AppSizes.fontBody),
+            style: TextStyle(fontSize: AppSizes.fontBody),
             decoration: const InputDecoration(
               hintText: '描述（可选）',
               filled: false,
@@ -229,7 +229,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
               contentPadding: EdgeInsets.zero,
             ),
           ),
-          const SizedBox(height: AppSizes.spaceSm),
+          SizedBox(height: AppSizes.spaceSm),
           // 图片按钮（占位，实际需接入 image_picker）
           Align(
             alignment: Alignment.centerRight,
@@ -266,7 +266,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           GestureDetector(
             onTap: _showAddSubjectDialog,
             child: Container(
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                 horizontal: AppSizes.spaceLg,
                 vertical: AppSizes.spaceSm,
               ),
@@ -371,8 +371,8 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           Row(
             children: [
               const Icon(Icons.timer_outlined, size: 22, color: AppColors.primaryDark),
-              const SizedBox(width: AppSizes.spaceMd),
-              const Expanded(
+              SizedBox(width: AppSizes.spaceMd),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -405,10 +405,10 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
 
           // 开启时显示时长选择
           if (_needsPomodoro) ...[
-            const Divider(height: AppSizes.spaceXl),
+            Divider(height: AppSizes.spaceXl),
             Row(
               children: [
-                const Text(
+                Text(
                   '预估完成时间',
                   style: TextStyle(
                     fontSize: AppSizes.fontBody,
@@ -419,17 +419,17 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                 const Spacer(),
                 Text(
                   _estimatedMinutes == null ? '不确定' : '$_estimatedMinutes 分钟',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSizes.fontBody,
                     color: AppColors.textSecondary,
                   ),
                 ),
-                const SizedBox(width: AppSizes.spaceXs),
+                SizedBox(width: AppSizes.spaceXs),
                 const Icon(Icons.chevron_right_rounded,
                     color: AppColors.textHint, size: 22),
               ],
             ),
-            const SizedBox(height: AppSizes.spaceMd),
+            SizedBox(height: AppSizes.spaceMd),
             // 时长快捷选择
             Wrap(
               spacing: AppSizes.spaceSm,
@@ -466,10 +466,10 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
             onTap: _pickRepeatFrequency,
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.all(AppSizes.spaceLg),
+              padding: EdgeInsets.all(AppSizes.spaceLg),
               child: Row(
                 children: [
-                  const Text(
+                  Text(
                     '重复',
                     style: TextStyle(
                       fontSize: AppSizes.fontBody,
@@ -480,28 +480,28 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                   const Spacer(),
                   Text(
                     _repeatFrequency.label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: AppSizes.fontBody,
                       color: AppColors.textSecondary,
                     ),
                   ),
-                  const SizedBox(width: AppSizes.spaceXs),
+                  SizedBox(width: AppSizes.spaceXs),
                   const Icon(Icons.chevron_right_rounded,
                       color: AppColors.textHint, size: 22),
                 ],
               ),
             ),
           ),
-          const Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
+          Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
 
           // 奖励设置
           Padding(
-            padding: const EdgeInsets.all(AppSizes.spaceLg),
+            padding: EdgeInsets.all(AppSizes.spaceLg),
             child: Column(
               children: [
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       '自定义奖励',
                       style: TextStyle(
                         fontSize: AppSizes.fontBody,
@@ -525,7 +525,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSizes.spaceMd),
+                SizedBox(height: AppSizes.spaceMd),
                 Row(
                   children: [
                     Expanded(
@@ -545,7 +545,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                       child: Text(
                         '$_rewardValue',
                         textAlign: TextAlign.right,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: AppSizes.fontHeadline,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -571,7 +571,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           width: 72,
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: AppSizes.fontBody,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
@@ -594,7 +594,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: AppSizes.durationFast,
-        padding: const EdgeInsets.symmetric(
+        padding: EdgeInsets.symmetric(
           horizontal: AppSizes.spaceLg,
           vertical: AppSizes.spaceSm,
         ),
@@ -659,8 +659,8 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        margin: const EdgeInsets.all(AppSizes.spaceLg),
-        padding: const EdgeInsets.all(AppSizes.spaceXl),
+        margin: EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceXl),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -675,8 +675,8 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                 Navigator.pop(ctx);
               },
               child: Container(
-                margin: const EdgeInsets.only(bottom: AppSizes.spaceSm),
-                padding: const EdgeInsets.all(AppSizes.spaceLg),
+                margin: EdgeInsets.only(bottom: AppSizes.spaceSm),
+                padding: EdgeInsets.all(AppSizes.spaceLg),
                 decoration: BoxDecoration(
                   color: selected
                       ? AppColors.primary.withValues(alpha: 0.15)
@@ -687,7 +687,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                   children: [
                     Text(
                       f.label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontBody,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
@@ -722,7 +722,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('分解任务'),
-        content: const Text(
+        content: Text(
           '把一个复杂任务拆成几个小步骤，孩子更容易完成哦。\n\n'
           '使用方式：先保存当前任务，再进入任务详情添加子任务。',
           style: TextStyle(fontSize: AppSizes.fontBody, height: 1.5),
