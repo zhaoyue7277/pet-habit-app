@@ -58,23 +58,23 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
             children: [
               // 总进度
               Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: AppSizes.spaceLg,
                   vertical: AppSizes.spaceSm,
                 ),
                 child: Row(
                   children: [
                     const Text('🏅', style: TextStyle(fontSize: 20)),
-                    const SizedBox(width: AppSizes.spaceSm),
+                    SizedBox(width: AppSizes.spaceSm),
                     Text(
                       '已解锁 $unlocked / $total',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontBody,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(width: AppSizes.spaceMd),
+                    SizedBox(width: AppSizes.spaceMd),
                     Expanded(
                       child: AppProgressBar(
                         value: total == 0 ? 0 : unlocked / total,
@@ -96,11 +96,11 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
                 indicatorColor: AppColors.primary,
                 indicatorSize: TabBarIndicatorSize.label,
                 dividerColor: Colors.transparent,
-                labelStyle: const TextStyle(
+                labelStyle: TextStyle(
                   fontSize: AppSizes.fontBody,
                   fontWeight: FontWeight.w800,
                 ),
-                unselectedLabelStyle: const TextStyle(
+                unselectedLabelStyle: TextStyle(
                   fontSize: AppSizes.fontBody,
                   fontWeight: FontWeight.w600,
                 ),
@@ -109,7 +109,7 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
                           child: Row(
                             children: [
                               Text(c.emoji, style: const TextStyle(fontSize: 18)),
-                              const SizedBox(width: AppSizes.spaceXs),
+                              SizedBox(width: AppSizes.spaceXs),
                               Text(c.label),
                             ],
                           ),
@@ -141,8 +141,8 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.all(AppSizes.spaceLg),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      padding: EdgeInsets.all(AppSizes.spaceLg),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: AppSizes.spaceLg,
         crossAxisSpacing: AppSizes.spaceLg,
@@ -158,7 +158,7 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
     final unlocked = view.isUnlocked;
 
     return AppCard(
-      padding: const EdgeInsets.all(AppSizes.spaceLg),
+      padding: EdgeInsets.all(AppSizes.spaceLg),
       onTap: () => _showBadgeDetail(view),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -198,7 +198,7 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
               ),
             ),
           ),
-          const SizedBox(height: AppSizes.spaceMd),
+          SizedBox(height: AppSizes.spaceMd),
 
           // ---------- 名称 ----------
           Text(
@@ -211,7 +211,7 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
               color: unlocked ? AppColors.textPrimary : AppColors.textHint,
             ),
           ),
-          const SizedBox(height: AppSizes.spaceXs),
+          SizedBox(height: AppSizes.spaceXs),
 
           // ---------- 描述 ----------
           Text(
@@ -224,7 +224,7 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
               color: unlocked ? AppColors.textSecondary : AppColors.textHint,
             ),
           ),
-          const SizedBox(height: AppSizes.spaceSm),
+          SizedBox(height: AppSizes.spaceSm),
 
           // ---------- 进度 / 已解锁 ----------
           if (unlocked)
@@ -242,10 +242,10 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
                   height: 8,
                   color: AppColors.textHint,
                 ),
-                const SizedBox(height: AppSizes.spaceXs),
+                SizedBox(height: AppSizes.spaceXs),
                 Text(
                   view.progressLabel,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSizes.fontTiny,
                     color: AppColors.textHint,
                   ),
@@ -265,7 +265,7 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
       context: context,
       builder: (ctx) => Dialog(
         child: Padding(
-          padding: const EdgeInsets.all(AppSizes.spaceXl),
+          padding: EdgeInsets.all(AppSizes.spaceXl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -288,29 +288,29 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
                   style: const TextStyle(fontSize: 50),
                 ),
               ),
-              const SizedBox(height: AppSizes.spaceLg),
+              SizedBox(height: AppSizes.spaceLg),
               Text(
                 view.def.name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontTitle,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: AppSizes.spaceSm),
+              SizedBox(height: AppSizes.spaceSm),
               Text(
                 view.def.description,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontBody,
                   color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: AppSizes.spaceLg),
+              SizedBox(height: AppSizes.spaceLg),
 
               // 达成条件
               Container(
-                padding: const EdgeInsets.all(AppSizes.spaceMd),
+                padding: EdgeInsets.all(AppSizes.spaceMd),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(AppSizes.radiusMd),
@@ -319,17 +319,17 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
                   children: [
                     Text(
                       '达成条件：${view.progressLabel}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontLabel,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: AppSizes.spaceXs),
+                    SizedBox(height: AppSizes.spaceXs),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('解锁奖励：',
+                        Text('解锁奖励：',
                             style: TextStyle(
                               fontSize: AppSizes.fontCaption,
                               color: AppColors.textSecondary,
@@ -347,19 +347,19 @@ class _AchievementPageState extends ConsumerState<AchievementPage>
 
               // 解锁时间
               if (unlocked && view.progress.unlockedAt != null) ...[
-                const SizedBox(height: AppSizes.spaceMd),
+                SizedBox(height: AppSizes.spaceMd),
                 Text(
                   '解锁于 ${view.progress.unlockedAt!.year}年'
                   '${view.progress.unlockedAt!.month}月'
                   '${view.progress.unlockedAt!.day}日',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSizes.fontCaption,
                     color: AppColors.textHint,
                   ),
                 ),
               ],
 
-              const SizedBox(height: AppSizes.spaceXl),
+              SizedBox(height: AppSizes.spaceXl),
               BouncyButton(
                 onPressed: () => Navigator.pop(ctx),
                 width: 160,
