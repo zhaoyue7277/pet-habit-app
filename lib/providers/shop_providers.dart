@@ -55,12 +55,16 @@ final shopItemUnlockedProvider =
 });
 
 /// 兑换请求的校验结果
+///
+/// v1.4.0 简化：不再有 `needPin` 分支 —— 兑换一律不验密码。
+/// 保留枚举是为了不破坏既有调用点，两个值语义统一为
+/// 「够不够钱」。
 enum ExchangeCheckResult {
-  /// 余额不足 —— 直接宠物卖萌拒绝，**不需要**弹 PIN
+  /// 余额不足 —— 宠物卖萌拒绝
   notEnoughCoin,
 
-  /// 余额充足 —— 需要弹家长 PIN 校验
-  needPin,
+  /// 余额充足 —— 可直接兑换（v1.4.0 起不再需要家长密码）
+  ok,
 }
 
 /// 商店 / 兑换控制器
@@ -74,14 +78,14 @@ class ShopController {
 
   /// 兑换流程第 1 步：判断余额
   ///
-  /// **对应需求的关键逻辑：**
-  /// 余额不足时**无需弹密码框**，直接返回 notEnoughCoin 让宠物卖萌拒绝。
+  /// 余额不足时返回 [ExchangeCheckResult.notEnoughCoin]，让宠物卖萌拒绝；
+  /// 足够则返回 [ExchangeCheckResult.ok]，UI 直接进入确认 → 兑换。
   ExchangeCheckResult checkBalance(Child child, ShopItem item) {
     final balance = item.coinType == RewardType.wishCoin
         ? child.wishCoin
         : child.petCoin;
     return balance >= item.price
-        ? ExchangeCheckResult.needPin
+        ? ExchangeCheckResult.ok
         : ExchangeCheckResult.notEnoughCoin;
   }
 
@@ -106,26 +110,29 @@ class ShopController {
     _bump();
   }
 
-  /// 兑换流程第 3 步：验证通过后扣币 + 写记录
+  /// 兑换流程第 3 步：扣币 + 写记录
   ///
-  /// **宠物币商品自动完成，心愿币商品（现实奖励）进入待审批。**
+  /// **v1.4.0：全部自动完成，不再有「待审批」状态。**
+  ///
+  /// 旧逻辑是「宠物商品即时到账，现实奖励转待审批」。但用户的主张
+  /// 很明确：代币一旦给孩子就是他的，怎么花由他决定。所以现实奖励
+  /// 也直接标记为已完成，家长只需**实际兑现**（带他去游乐园之类），
+  /// 而不是在 App 里点「批准」。
+  ///
+  /// 这样兑换记录里全是「已完成」，家长仍能看到孩子换了什么，
+  /// 只是不再被要求审批。
   Future<ExchangeLog> performExchange({
     required Child child,
     required ShopItem item,
   }) async {
-    // 现实奖励需要家长审批；宠物商品即时到账
-    final autoApprove = item.shopType == ShopType.monster;
-
     final log = await _db.performExchange(
       childId: child.id,
       item: item,
-      autoApprove: autoApprove,
+      autoApprove: true,
     );
 
-    // 宠物商品直接入背包
-    if (item.shopType == ShopType.monster) {
-      await _db.addToInventory(child.id, item);
-    }
+    // 商品直接入背包
+    await _db.addToInventory(child.id, item);
 
     // 兑换会推进「累计兑换」类勋章进度
     await _db.refreshAchievements(child.id);
