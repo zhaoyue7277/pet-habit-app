@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -35,6 +37,28 @@ class _HomePageState extends ConsumerState<HomePage> {
   bool _jumping = false;
   bool _spinning = false;
 
+  /// v1.3.0：点击宠物后的临时回话（覆盖气泡里的闲时台词）
+  String? _tapDialogue;
+  Timer? _tapDialogueTimer;
+
+  /// 点击宠物：互动动画 + 换一句「点击专用台词」
+  void _onPetTapped() {
+    _triggerRandomAnimation();
+
+    final live = ref.read(petLiveStateProvider);
+    final text = ref.read(databaseProvider).pickDialogue(
+          trigger: PetDialogueTrigger.tapPet,
+          moodState: live?.moodState,
+          name: ref.read(activeChildProvider)?.name ?? '小朋友',
+        );
+
+    _tapDialogueTimer?.cancel();
+    setState(() => _tapDialogue = text);
+    _tapDialogueTimer = Timer(const Duration(milliseconds: 3200), () {
+      if (mounted) setState(() => _tapDialogue = null);
+    });
+  }
+
   /// 点击宠物触发互动动画
   void _triggerRandomAnimation() {
     if (_jumping || _spinning) return;
@@ -49,6 +73,12 @@ class _HomePageState extends ConsumerState<HomePage> {
         if (mounted) setState(() => _spinning = false);
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _tapDialogueTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -96,7 +126,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                   horizontal: AppSizes.spaceLg,
                 ),
                 child: PetDialogueBubble(
-                  text: ref.watch(petLiveStateProvider)?.dialogue ??
+                  text: _tapDialogue ??
+                      ref.watch(petLiveStateProvider)?.dialogue ??
                       '今天也要加油哦～',
                 ),
               ),
@@ -165,9 +196,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   /// 宠物形象区（左侧宠物 + 右侧统计卡）
+  ///
+  /// **响应式改造（v1.2.3）**：宠物卡宽度不再硬编码 150，
+  /// 而是按屏宽比例计算（约 36%，夹在 120~150 之间），
+  /// 保证极窄屏（320dp）下右侧统计卡仍有足够空间，不溢出。
   Widget _buildPetSection() {
     final live = ref.watch(petLiveStateProvider);
     final child = ref.watch(activeChildProvider);
+
+    final screenW = MediaQuery.of(context).size.width;
+    final petCardW = (screenW * 0.36).clamp(112.0, 150.0);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
@@ -175,54 +213,60 @@ class _HomePageState extends ConsumerState<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ---------- 左侧：宠物舞台（v2：渐变天幕卡，替代裸放宠物） ----------
-          Container(
-            width: 150,
-            padding: const EdgeInsets.symmetric(
-              vertical: AppSizes.spaceMd,
-              horizontal: AppSizes.spaceSm,
-            ),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: AppColors.skyGradient,
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+          SizedBox(
+            width: petCardW,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                vertical: AppSizes.spaceMd,
+                horizontal: AppSizes.spaceSm,
               ),
-              borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-              boxShadow: AppShadows.card,
-            ),
-            child: Column(
-              children: [
-                // 心情值徽标（v2：矢量图标替代 ❤️ emoji）
-                Row(
-                  children: [
-                    const SizedBox(width: AppSizes.spaceSm),
-                    const Icon(
-                      Icons.favorite_rounded,
-                      size: 18,
-                      color: AppColors.error,
-                    ),
-                    const SizedBox(width: AppSizes.spaceXs),
-                    Text(
-                      '${live?.mood ?? 0}',
-                      style: const TextStyle(
-                        fontSize: AppSizes.fontBody,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.accentDark,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: AppColors.skyGradient,
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+                boxShadow: AppShadows.card,
+              ),
+              child: Column(
+                children: [
+                  // 心情值徽标（v2：矢量图标替代 ❤️ emoji）
+                  Row(
+                    children: [
+                      const SizedBox(width: AppSizes.spaceSm),
+                      const Icon(
+                        Icons.favorite_rounded,
+                        size: 18,
+                        color: AppColors.error,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: AppSizes.spaceXs),
+                      Flexible(
+                        child: Text(
+                          '${live?.mood ?? 0}',
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: AppSizes.fontBody,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.accentDark,
+                          ),
+                        ),
+                      ),
+                    ],
                 ),
                 const SizedBox(height: AppSizes.spaceXs),
 
                 // 宠物形象（点击触发互动动画）
                 GestureDetector(
-                  onTap: _triggerRandomAnimation,
+                  onTap: _onPetTapped,
                   child: PetAvatar(
                     pet: live?.pet,
                     size: AppSizes.petHomeSize,
                     moodState: live?.moodState ?? PetMoodState.normal,
                     isJumping: _jumping,
                     isSpinning: _spinning,
+                    // 3D 路径的点击由 WebView 内部判定后回传
+                    onTap: _onPetTapped,
                   ),
                 ),
 
@@ -268,6 +312,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     child: const Text('领养宠物 →'),
                   ),
               ],
+              ),
             ),
           ),
 
