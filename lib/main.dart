@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'services/database_service.dart';
 import 'services/hive_init.dart';
+import 'services/pet_3d_preloader.dart';
 import 'services/recording_service.dart';
 import 'services/white_noise_service.dart';
 import 'theme/app_theme.dart';
@@ -49,6 +50,17 @@ Future<void> main() async {
   // 让用户点「开始朗读」时的首次响应更快）
   // ignore: unawaited_futures
   RecordingService.instance.hasPermission();
+
+  // 预热 3D 宠物资源（viewer 页面 + model-viewer 引擎 + Draco 解码器）。
+  //
+  // 【为什么】pet_*.glb 用了 Draco 压缩，而 model-viewer 的解码器不内嵌在
+  // bundle 中。若不预热，用户进入首页时 WebView 才去读这些资源，首屏 3D
+  // 区域会明显空白/转圈。这里在启动阶段提前读进 asset 缓存。
+  //
+  // 默认不带模型（3 个 glb 共约 16MB，启动阶段全读会吃内存）；
+  // 模型在宠物品种确定后由 Pet3DPreloader.warmModel() 单独预热。
+  // 预加载是「尽力而为」：失败不影响主流程，3D 组件自身有超时兜底。
+  startPet3DPreload();
 
   runApp(
     const ProviderScope(
