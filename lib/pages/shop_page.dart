@@ -61,14 +61,14 @@ class _ShopPageState extends ConsumerState<ShopPage> {
                     text: '商店正在补货中～',
                   )
                 : GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(
+                    padding: EdgeInsets.fromLTRB(
                       AppSizes.spaceLg,
                       AppSizes.spaceSm,
                       AppSizes.spaceLg,
                       AppSizes.bottomNavHeight + 40,
                     ),
                     gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
+                        SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       mainAxisSpacing: AppSizes.spaceLg,
                       crossAxisSpacing: AppSizes.spaceLg,
@@ -89,7 +89,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
   /// 商店切换 Tab（对应截图：两个斜挂的招牌样式）
   Widget _buildShopTabs() {
     return Padding(
-      padding: const EdgeInsets.symmetric(
+      padding: EdgeInsets.symmetric(
         horizontal: AppSizes.spaceLg,
         vertical: AppSizes.spaceMd,
       ),
@@ -98,18 +98,20 @@ class _ShopPageState extends ConsumerState<ShopPage> {
           final selected = _currentShop == type;
           return Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceSm),
+              padding: EdgeInsets.symmetric(horizontal: AppSizes.spaceSm),
               child: GestureDetector(
                 onTap: () => setState(() => _currentShop = type),
                 child: AnimatedContainer(
                   duration: AppSizes.durationFast,
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     vertical: AppSizes.spaceMd,
                   ),
                   decoration: BoxDecoration(
                     gradient: selected
                         ? const LinearGradient(
                             colors: AppColors.primaryGradient,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           )
                         : null,
                     color: selected ? null : AppColors.surface,
@@ -129,7 +131,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
                         type.emoji,
                         style: const TextStyle(fontSize: 24),
                       ),
-                      const SizedBox(height: AppSizes.spaceXs),
+                      SizedBox(height: AppSizes.spaceXs),
                       Text(
                         type.label,
                         style: TextStyle(
@@ -161,9 +163,9 @@ class _ShopPageState extends ConsumerState<ShopPage> {
         : RewardType.petCoin;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
+      padding: EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
       child: AppCard(
-        padding: const EdgeInsets.symmetric(
+        padding: EdgeInsets.symmetric(
           horizontal: AppSizes.spaceLg,
           vertical: AppSizes.spaceMd,
         ),
@@ -173,10 +175,10 @@ class _ShopPageState extends ConsumerState<ShopPage> {
               coinType.emoji,
               style: const TextStyle(fontSize: 24),
             ),
-            const SizedBox(width: AppSizes.spaceSm),
+            SizedBox(width: AppSizes.spaceSm),
             Text(
               '${coinType.label}余额',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontBody,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
@@ -185,13 +187,13 @@ class _ShopPageState extends ConsumerState<ShopPage> {
             const Spacer(),
             Text(
               '$balance',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontTitle,
                 fontWeight: FontWeight.w800,
                 color: AppColors.primaryDark,
               ),
             ),
-            const SizedBox(width: AppSizes.spaceMd),
+            SizedBox(width: AppSizes.spaceMd),
 
             // 兑换记录入口（对应截图：清单图标）
             GestureDetector(
@@ -217,7 +219,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
     final affordable = balance >= item.price;
 
     return AppCard(
-      padding: const EdgeInsets.all(AppSizes.spaceMd),
+      padding: EdgeInsets.all(AppSizes.spaceMd),
       onTap: () => _onExchangeTap(child, item),
       child: Opacity(
         opacity: unlocked ? 1.0 : 0.55,
@@ -261,7 +263,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
                                 color: Colors.white, size: 22),
                             Text(
                               'Lv.${item.unlockLevel}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: AppSizes.fontTiny,
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
@@ -275,14 +277,17 @@ class _ShopPageState extends ConsumerState<ShopPage> {
               ),
             ),
 
-            const SizedBox(height: AppSizes.spaceSm),
+            SizedBox(height: AppSizes.spaceSm),
 
             // ---------- 商品名 ----------
+            // 【v1.4.0】允许换 2 行：2 列卡片在窄屏下每格约 165px，
+            // 长商品名（如「周末去游乐园」）单行会被截断。
             Text(
               item.name,
-              maxLines: 1,
+              maxLines: 2,
+              textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontBody,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -291,21 +296,21 @@ class _ShopPageState extends ConsumerState<ShopPage> {
 
             // ---------- 规格 ----------
             if (item.specLabel.isNotEmpty) ...[
-              const SizedBox(height: AppSizes.spaceXs),
+              SizedBox(height: AppSizes.spaceXs),
               Text(
                 item.specLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontCaption,
                   color: AppColors.textHint,
                 ),
               ),
             ],
 
-            const SizedBox(height: AppSizes.spaceSm),
+            SizedBox(height: AppSizes.spaceSm),
 
             // ---------- 价格按钮 ----------
             Container(
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                 vertical: AppSizes.spaceSm,
               ),
               decoration: BoxDecoration(
@@ -319,7 +324,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
                 children: [
                   Text(item.coinType.emoji,
                       style: const TextStyle(fontSize: 16)),
-                  const SizedBox(width: AppSizes.spaceXs),
+                  SizedBox(width: AppSizes.spaceXs),
                   Text(
                     '${item.price}',
                     style: TextStyle(
@@ -341,13 +346,23 @@ class _ShopPageState extends ConsumerState<ShopPage> {
 
   // ==================== 兑换流程（核心） ====================
 
-  /// 点击商品 → 触发兑换流程
+  /// 点击商品 → 触发兑换
   ///
-  /// **流程（对应需求模块 3）：**
-  /// 1. 判断余额：
-  ///    - 不足 → **不弹密码框**，宠物卖萌拒绝；
-  ///    - 足够 → 弹出家长 PIN 输入框。
-  /// 2. PIN 验证通过 → 扣除金币 → 写入兑换记录 → 撒花欢呼动画。
+  /// **v1.4.0 重要变更：彻底取消家长密码**
+  ///
+  /// **为什么取消？** 因为管控点放错了位置。
+  ///
+  /// 代币管控的正确位置是「**获取**」环节 —— 孩子不能凭空产生代币，
+  /// 每一枚币都必须来自家长的认可（打卡验收、任务完成）。一旦币发到了
+  /// 孩子账户，所有权就已经转移了，这时家长再拦「怎么花」，
+  /// 本质上是在否定自己刚给出的承诺。
+  ///
+  /// 更重要的是**教育意义**：孩子需要练习「自己决定 + 自己承担」。
+  /// 花 50 币换了个不喜欢的皮肤？那就记住了下次要看清。
+  /// 这个「换错了也得认」的体验，比家长替他做决定有价值得多。
+  ///
+  /// **现在的流程**：余额够 → 直接扣币 → 撒花。
+  /// 只保留一个「确认」弹窗（防误触），不涉及身份验证。
   Future<void> _onExchangeTap(Child child, ShopItem item) async {
     // 未解锁提示
     final unlocked = item.shopType == ShopType.monster
@@ -364,7 +379,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
     final check = shopController.checkBalance(child, item);
 
     if (check == ExchangeCheckResult.notEnoughCoin) {
-      // 余额不足：直接宠物卖萌拒绝，**无需弹密码框**
+      // 余额不足：宠物卖萌拒绝
       await showDialog<void>(
         context: context,
         builder: (_) => CoinNotEnoughDialog(
@@ -376,45 +391,114 @@ class _ShopPageState extends ConsumerState<ShopPage> {
       return;
     }
 
-    // ---------- 第 2 步：余额充足 → 弹出家长 PIN ----------
-    // 若家长尚未设置过 PIN，先引导设置
-    if (!shopController.hasPin) {
-      await _setupPinThenExchange(child, item);
-      return;
-    }
+    // ---------- 第 2 步：防误触确认（不是身份验证） ----------
+    final confirmed = await _confirmExchange(child, item);
+    if (confirmed != true) return;
 
-    final verified = await showDialog<bool>(
-      context: context,
-      builder: (_) => PinInputDialog(
-        title: '请家长输入密码',
-        subtitle: '兑换「${item.name}」需要家长确认',
-        onVerify: shopController.verifyPin,
-      ),
-    );
-
-    if (verified != true) return;
-
-    // ---------- 第 3 步：验证通过 → 扣币 + 写记录 + 撒花 ----------
+    // ---------- 第 3 步：直接兑换 ----------
     await _performExchange(child, item);
   }
 
-  /// 尚未设置 PIN 时：先设置再兑换
-  Future<void> _setupPinThenExchange(Child child, ShopItem item) async {
-    final pin = await showDialog<String>(
+  /// 兑换前的「点一下确认」——只防误触，不验身份
+  ///
+  /// 与旧版的区别：不再需要任何密码。这里只是一个「你确定要花
+  /// N 个币换这个吗」的常规二次确认，任何 App 的消费操作都该有。
+  Future<bool?> _confirmExchange(Child child, ShopItem item) {
+    final balance = item.coinType == RewardType.wishCoin
+        ? child.wishCoin
+        : child.petCoin;
+
+    return showDialog<bool>(
       context: context,
-      builder: (_) => PinInputDialog(
-        title: '设置家长密码',
-        subtitle: '用于确认孩子的兑换申请，请牢记',
-        isSettingMode: true,
-        onVerify: (_) => true,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        ),
+        title: Row(
+          children: [
+            Text(item.iconEmoji, style: const TextStyle(fontSize: 28)),
+            SizedBox(width: AppSizes.spaceSm),
+            Expanded(
+              child: Text(
+                '确认兑换',
+                style: TextStyle(
+                  fontSize: AppSizes.fontHeadline,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              item.name,
+              style: TextStyle(
+                fontSize: AppSizes.fontBody,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: AppSizes.spaceMd),
+            // 余额变化预览：让孩子清楚看到「花掉多少、还剩多少」
+            Row(
+              children: [
+                Text(
+                  '${item.coinType.emoji} $balance',
+                  style: TextStyle(
+                    fontSize: AppSizes.fontLabel,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSizes.spaceSm,
+                  ),
+                  child: const Text('→'),
+                ),
+                Text(
+                  '${item.coinType.emoji} ${balance - item.price}',
+                  style: TextStyle(
+                    fontSize: AppSizes.fontLabel,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: AppSizes.spaceSm),
+            Text(
+              '花掉 ${item.price} ${item.coinType.label}，换掉就不退咯～',
+              style: TextStyle(
+                fontSize: AppSizes.fontCaption,
+                color: AppColors.textHint,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              '再想想',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              '就换这个',
+              style: TextStyle(
+                color: AppColors.primaryDark,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
       ),
     );
-
-    if (pin == null) return;
-    await ref.read(shopControllerProvider).setPin(pin);
-
-    // 设置完成后直接继续兑换
-    await _performExchange(child, item);
   }
 
   /// 执行兑换
@@ -451,8 +535,8 @@ class _ShopPageState extends ConsumerState<ShopPage> {
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
-        margin: const EdgeInsets.all(AppSizes.spaceLg),
-        padding: const EdgeInsets.all(AppSizes.spaceXl),
+        margin: EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceXl),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -460,7 +544,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               '兑换记录',
               style: TextStyle(
                 fontSize: AppSizes.fontHeadline,
@@ -468,9 +552,9 @@ class _ShopPageState extends ConsumerState<ShopPage> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
             if (logs.isEmpty)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(AppSizes.spaceXl),
                 child: EmptyPlaceholder(
                   emoji: '📋',
@@ -483,7 +567,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
                   shrinkWrap: true,
                   itemCount: logs.length,
                   separatorBuilder: (_, __) =>
-                      const SizedBox(height: AppSizes.spaceSm),
+                      SizedBox(height: AppSizes.spaceSm),
                   itemBuilder: (_, i) {
                     final log = logs[i];
                     return _buildLogTile(log);
@@ -505,7 +589,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
     };
 
     return Container(
-      padding: const EdgeInsets.all(AppSizes.spaceMd),
+      padding: EdgeInsets.all(AppSizes.spaceMd),
       decoration: BoxDecoration(
         color: AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
@@ -513,14 +597,14 @@ class _ShopPageState extends ConsumerState<ShopPage> {
       child: Row(
         children: [
           Text(log.itemIcon, style: const TextStyle(fontSize: 28)),
-          const SizedBox(width: AppSizes.spaceMd),
+          SizedBox(width: AppSizes.spaceMd),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   log.itemName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSizes.fontBody,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -530,7 +614,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
                   '${log.exchangeTime.month}月${log.exchangeTime.day}日 '
                   '${log.exchangeTime.hour.toString().padLeft(2, '0')}:'
                   '${log.exchangeTime.minute.toString().padLeft(2, '0')}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSizes.fontCaption,
                     color: AppColors.textHint,
                   ),
@@ -543,13 +627,13 @@ class _ShopPageState extends ConsumerState<ShopPage> {
             children: [
               Text(
                 '-${log.costCoin} ${log.coinType.emoji}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontLabel,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: AppSizes.spaceXs),
+              SizedBox(height: AppSizes.spaceXs),
               TagChip(
                 text: statusText,
                 color: statusColor.withValues(alpha: 0.2),
@@ -568,7 +652,7 @@ class _ShopPageState extends ConsumerState<ShopPage> {
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: AppSizes.fontBody,
             fontWeight: FontWeight.w600,
           ),
