@@ -12,12 +12,62 @@ final habitListProvider = Provider<List<Habit>>((ref) {
   return ref.watch(databaseProvider).getHabits(childId);
 });
 
-/// 今日已打卡的习惯 ID 集合
+/// 今日已**验收通过**的习惯 ID 集合
+///
+/// v1.4.0 起：待验收 / 已驳回的记录不算完成，见
+/// `DatabaseService.getCheckedHabitIdsOn`。
 final checkedHabitIdsProvider = Provider<Set<String>>((ref) {
   final childId = ref.watch(activeChildIdProvider);
   ref.watch(dataRevisionProvider);
   if (childId == null) return {};
   return ref.watch(databaseProvider).getCheckedHabitIdsOn(childId, DateTime.now());
+});
+
+/// 今日**待验收**的习惯 ID 集合（UI 显示「⏳ 待验收」角标）
+final pendingHabitIdsProvider = Provider<Set<String>>((ref) {
+  final childId = ref.watch(activeChildIdProvider);
+  ref.watch(dataRevisionProvider);
+  if (childId == null) return {};
+  final db = ref.watch(databaseProvider);
+  final today = HabitCheckIn.keyOf(DateTime.now());
+  return db
+      .getPendingCheckIns(childId)
+      .where((c) => c.dateKey == today)
+      .map((c) => c.habitId)
+      .toSet();
+});
+
+/// 待验收记录队列（家长验收页数据源，最新在前）
+final pendingCheckInsProvider = Provider<List<HabitCheckIn>>((ref) {
+  final childId = ref.watch(activeChildIdProvider);
+  ref.watch(dataRevisionProvider);
+  if (childId == null) return [];
+  return ref.watch(databaseProvider).getPendingCheckIns(childId);
+});
+
+/// 今日被驳回的记录（孩子需要知道「可以补交」）
+///
+/// 单独成一个 provider，是因为「驳回」与「待验收」在 UI 上语气
+/// 完全不同：前者要安慰 + 引导补交，后者只是等待。
+final rejectedCheckInsTodayProvider = Provider<List<HabitCheckIn>>((ref) {
+  final childId = ref.watch(activeChildIdProvider);
+  ref.watch(dataRevisionProvider);
+  if (childId == null) return [];
+  final db = ref.watch(databaseProvider);
+  final today = HabitCheckIn.keyOf(DateTime.now());
+  return db.checkIns.values
+      .cast<HabitCheckIn>()
+      .where((c) =>
+          c.childId == childId && c.dateKey == today && c.isRejected)
+      .toList();
+});
+
+/// 待验收数量（首页红点角标）
+final pendingCheckInCountProvider = Provider<int>((ref) {
+  final childId = ref.watch(activeChildIdProvider);
+  ref.watch(dataRevisionProvider);
+  if (childId == null) return 0;
+  return ref.watch(databaseProvider).getPendingCheckInCount(childId);
 });
 
 /// 习惯按打卡时段分组（对应截图：「漫游驿站 · 全天可打卡」）
@@ -212,11 +262,39 @@ class HabitController {
     _bump();
   }
 
-  /// 打卡，返回本次获得的奖励数值
+  /// 打卡（v1.4.0：提交后进入「待验收」，不再立即发奖励）
+  ///
+  /// 返回值恒为 0 —— 奖励要等家长在验收队列里点「通过」才发。
+  /// 保留返回值是为了不破坏既有调用点。
   Future<int> checkIn(Habit habit) async {
-    final reward = await _db.checkInHabit(habit);
-    // 打卡会推进「累计打卡 / 最长连击」类勋章进度
-    await _db.refreshAchievements(habit.childId);
+    await _db.checkInHabit(habit);
+    _bump();
+    return 0;
+  }
+
+  /// 家长确认打卡 → 真实发放奖励
+  ///
+  /// 返回本次发放的奖励总额。
+  Future<int> approveCheckIn(String checkInId) async {
+    final childId = _ref.read(activeChildIdProvider);
+    final reward = await _db.approveCheckIn(checkInId);
+    if (childId != null) await _db.refreshAchievements(childId);
+    _bump();
+    return reward;
+  }
+
+  /// 家长驳回打卡（可附原因，不发奖励）
+  Future<void> rejectCheckIn(String checkInId, {String? reason}) async {
+    await _db.rejectCheckIn(checkInId, reason: reason);
+    _bump();
+  }
+
+  /// 一键全部通过
+  Future<int> approveAllPending() async {
+    final childId = _ref.read(activeChildIdProvider);
+    if (childId == null) return 0;
+    final reward = await _db.approveAllPending(childId);
+    await _db.refreshAchievements(childId);
     _bump();
     return reward;
   }
@@ -228,6 +306,10 @@ class HabitController {
   /// 某习惯今日打卡时间（对应截图：星星牌上的时间）
   DateTime? todayCheckInTime(Habit habit) =>
       _db.getHabitCheckInTime(habit.id, habit.childId, DateTime.now());
+
+  /// 某习惯今日的打卡记录（含待验收 / 已驳回）
+  HabitCheckIn? todayRecord(Habit habit) =>
+      _db.getCheckInRecord(habit.id, habit.childId, DateTime.now());
 }
 
 final habitControllerProvider = Provider<HabitController>((ref) {
