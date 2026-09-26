@@ -14,7 +14,7 @@ import 'pet_3d_viewer.dart';
 /// 后续替换时：只需把 [_buildPlaceholder] 换成 `Image.asset(...)`，
 /// 对外接口（size / moodState / isJumping 等）完全不变。
 class PetAvatar extends StatefulWidget {
-  const PetAvatar({
+  PetAvatar({
     super.key,
     required this.pet,
     this.size = AppSizes.petHomeSize,
