@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,6 +31,34 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
   bool _spinning = false;
   bool _glowing = false;
 
+  /// v1.3.0：点击宠物后的临时回话
+  ///
+  /// 为空时展示 [PetLiveState.dialogue]（闲时台词）；
+  /// 点击后替换为点击专用台词，[Duration] 到期自动恢复。
+  /// 不写库 —— 它只是展示层的临时态，没必要持久化。
+  String? _tapDialogue;
+  Timer? _tapDialogueTimer;
+
+  /// 触发点击互动：弹跳 + 换一句「点击专用台词」
+  void _onPetTapped(PetLiveState live) {
+    // 2D 路径自己有跳跃动画；3D 路径的弹跳在 Pet3DViewer 内部完成，
+    // 所以这里只负责「说话」这部分，避免两边动画打架。
+    _triggerInteractionAnimation();
+
+    final text = ref.read(databaseProvider).pickDialogue(
+          trigger: PetDialogueTrigger.tapPet,
+          moodState: live.moodState,
+          name: ref.read(activeChildProvider)?.name ?? '小朋友',
+        );
+
+    _tapDialogueTimer?.cancel();
+    setState(() => _tapDialogue = text);
+    // 3.2s 后恢复闲时台词（比台词读完略短，保持节奏轻快）
+    _tapDialogueTimer = Timer(const Duration(milliseconds: 3200), () {
+      if (mounted) setState(() => _tapDialogue = null);
+    });
+  }
+
   /// 触发点击互动动画（随机跳跃或转圈）
   void _triggerInteractionAnimation() {
     if (_jumping || _spinning) return;
@@ -51,6 +81,12 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
     Future.delayed(AppSizes.durationCelebrate, () {
       if (mounted) setState(() => _glowing = false);
     });
+  }
+
+  @override
+  void dispose() {
+    _tapDialogueTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -183,19 +219,26 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
               isJumping: _jumping,
               isSpinning: _spinning,
               showGlow: _glowing,
+              // v1.3.0：3D 路径的点击来自 WebView 内部（viewer.html 判定），
+              // 需要显式回传才拿得到；2D 路径由外层 GestureDetector 处理。
+              onTap: () => _onPetTapped(live),
             ),
           ),
           const SizedBox(height: AppSizes.spaceMd),
 
-          // 台词
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceXl),
-            child: Text(
-              live.dialogue,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: AppSizes.fontLabel,
-                color: AppColors.textSecondary,
+          // 台词（点击后短暂切换为点击专用台词）
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: Padding(
+              key: ValueKey(_tapDialogue ?? live.dialogue),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceXl),
+              child: Text(
+                _tapDialogue ?? live.dialogue,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: AppSizes.fontLabel,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
           ),
