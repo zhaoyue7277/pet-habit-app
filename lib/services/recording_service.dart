@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:record/record.dart';
 
 import 'blob_io.dart';
@@ -80,6 +81,64 @@ class RecordingService {
   final List<Uint8List> _chunks = <Uint8List>[];
   StreamSubscription<Uint8List>? _streamSub;
 
+  // ==================== v1.4.0 防作弊状态 ====================
+  //
+  // 【为什么录音也要防作弊？】
+  //
+  // 旧逻辑只校验「时长 ≥ 3 秒」就发奖励 —— 孩子只要点开始、静音坐 3 秒、
+  // 点停止，就能刷到心愿币。番茄钟早就用 `didChangeAppLifecycleState`
+  // 防了「切出去干别的」，录音打卡却完全没有，属于明显的短板。
+  //
+  // 这里把番茄钟的那套判定搬过来，并额外加一条「静音检测」：
+  //   1. 录音期间切出 App 超过宽限时长 → 本次作废；
+  //   2. 全程几乎没有声音 → 判定「没真的读」，本次作废；
+  //   3. 有效发声时长不足 → 本次作废。
+  //
+  // 三条一起构成「人真的对着麦克风读了」的最小充分条件。
+  // 注意：我们**不做语音识别、不上传**，只统计音量大小这一层
+  // 物理指标，不涉及任何隐私内容采集。
+
+  /// 上一次离开 App 的时间（切出时记录，切回时判定）
+  DateTime? _awaySince;
+
+  /// 累计「有效发声」毫秒（音量高于阈值才计入）
+  int _voicedMs = 0;
+
+  /// 本次录音的音量采样总次数
+  int _sampleCount = 0;
+
+  /// 本次录音中采到「有声音」的次数
+  int _voicedSamples = 0;
+
+  /// 最近一次采样的音量（0~1），供 UI 展示
+  double _lastAmplitude = 0;
+
+  /// 作废原因（null 表示未作废）
+  String? _voidReason;
+
+  /// 判断「这一段算不算有声音」的音量阈值。
+  ///
+  /// 0.16 的来历：`currentAmplitude()` 把 dBFS 映射到 0~1，安静室内
+  /// 底噪一般落在 0.05~0.12，正常说话在 0.3~0.8。取 0.16 能滤掉底噪，
+  /// 又不会把「小声读」误杀。
+  static const double _voiceThreshold = 0.16;
+
+  /// 本次录音是否已被判定作废
+  bool get isVoided => _voidReason != null;
+
+  /// 作废原因（UI 提示用）
+  String? get voidReason => _voidReason;
+
+  /// 有效发声时长（毫秒）
+  int get voicedMs => _voicedMs;
+
+  /// 发声占比（0~1）
+  double get voicedRatio =>
+      _sampleCount == 0 ? 0 : _voicedSamples / _sampleCount;
+
+  /// 最近一次采样音量（0~1）
+  double get lastAmplitude => _lastAmplitude;
+
   Duration get elapsed {
     final started = _startedAt;
     if (started == null) return Duration.zero;
@@ -97,6 +156,9 @@ class RecordingService {
     void Function()? onAutoStop,
   }) async {
     if (_recording) return null;
+
+    // ---------- 重置本轮防作弊状态 ----------
+    _resetGuardState();
 
     try {
       if (!await _recorder.hasPermission()) {
@@ -204,6 +266,8 @@ class RecordingService {
       return null;
     } finally {
       _chunks.clear();
+      // 注意：这里**不清**防作弊统计 —— stop() 之后 UI 还要调
+      // validate() 做判定，统计必须保留到下一轮 start() 才重置。
     }
   }
 
@@ -249,21 +313,122 @@ class RecordingService {
       debugPrint('[Recording] 取消录音失败：$e');
     } finally {
       _chunks.clear();
+      // 取消 = 彻底作废，连同防作弊状态一起清空
+      _resetGuardState();
     }
   }
 
-  /// 实时音量（dBFS），用于让波形跟随真实音量起伏
+  /// 实时音量（0~1），用于让波形跟随真实音量起伏
+  ///
+  /// **v1.4.0 起，这个函数同时承担「防作弊采样」职责**：
+  /// 每次调用都会把音量喂给内部统计（有效发声次数 / 总采样数），
+  /// 因此 UI 侧只要照旧每 300ms 调一次即可，防作弊自动生效，
+  /// 不需要 UI 额外写任何代码。
   ///
   /// 平台不支持时返回 0，UI 侧按「静默」处理。
   Future<double> currentAmplitude() async {
+    double normalized = 0;
     try {
       final amp = await _recorder.getAmplitude();
       // current 为 dBFS 负值（0 = 满幅，-60 ≈ 静音），映射到 0..1
-      final normalized = (amp.current + 60) / 60;
-      return normalized.clamp(0.0, 1.0);
+      normalized = ((amp.current + 60) / 60).clamp(0.0, 1.0);
     } catch (_) {
-      return 0;
+      normalized = 0;
     }
+    _feedGuard(normalized);
+    return normalized;
+  }
+
+  /// 把一次音量采样喂给防作弊统计
+  void _feedGuard(double level) {
+    if (!_recording) return;
+    _lastAmplitude = level;
+    _sampleCount++;
+    if (level >= _voiceThreshold) {
+      _voicedSamples++;
+      // 采样间隔按 300ms 计（UI 固定每 300ms 采一次）
+      _voicedMs += 300;
+    }
+  }
+
+  /// 重置防作弊状态（每次开始录音前调用）
+  void _resetGuardState() {
+    _awaySince = null;
+    _voicedMs = 0;
+    _sampleCount = 0;
+    _voicedSamples = 0;
+    _lastAmplitude = 0;
+    _voidReason = null;
+  }
+
+  // ==================== 生命周期防作弊（v1.4.0） ====================
+
+  /// 由 UI 层在 `didChangeAppLifecycleState` 中转调。
+  ///
+  /// **为什么不让 Service 自己 addObserver？**
+  /// Service 是全局单例，若自己注册 observer 会活到 App 结束，
+  /// 容易与其他模块（番茄钟）抢事件或泄漏。改由录音页在
+  /// 进入/退出时转调，生命周期与「一次录音」严格对齐，更干净。
+  ///
+  /// [allowAwaySeconds] 为宽限秒数：离开不超过这个时长视为
+  /// 「误触 / 看一眼时间」，不算作弊。
+  void onAppLifecycleChanged(
+    AppLifecycleState state, {
+    int allowAwaySeconds = 60,
+  }) {
+    if (!_recording) return;
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        // 切出：记下时间点（只记第一次，避免 inactive→paused 连击覆盖）
+        _awaySince ??= DateTime.now();
+        break;
+      case AppLifecycleState.resumed:
+        final since = _awaySince;
+        _awaySince = null;
+        if (since == null) return;
+        final away = DateTime.now().difference(since).inSeconds;
+        if (away > allowAwaySeconds) {
+          _voidReason =
+              '录音中途离开了 App（$away 秒），这次不算哦，重新读一次吧～';
+        }
+        break;
+      case AppLifecycleState.detached:
+        break;
+    }
+  }
+
+  /// 停止录音前的最终校验（v1.4.0 核心判定）
+  ///
+  /// 返回 `null` 表示通过；否则返回**给孩子看的原因**。
+  ///
+  /// 判定顺序（由重到轻）：
+  /// 1. 已经因「切出超时」被标记作废 → 直接拒；
+  /// 2. 时长不够 [minValidMs]；
+  /// 3. 有效发声时长不够 [minVoicedMs]（静音刷时长的主要拦截点）；
+  /// 4. 发声占比过低（一直断断续续 / 大部分时间没声音）。
+  String? validate({
+    required int minValidMs,
+    int minVoicedMs = 1200,
+    double minVoicedRatio = 0.12,
+  }) {
+    if (_voidReason != null) return _voidReason;
+    final durationMs = elapsed.inMilliseconds;
+    if (durationMs < minValidMs) {
+      return '读得太短啦，至少要读满 ${(minValidMs / 1000).ceil()} 秒才算哦';
+    }
+    // 采样数太少（如设备不支持音量 API）时，退化为「只看时长」，
+    // 不能让「拿不到音量」的设备永远无法打卡。
+    if (_sampleCount >= 3) {
+      if (_voicedMs < minVoicedMs) {
+        return '好像一直没出声呢，请对着麦克风大声读出来～';
+      }
+      if (voicedRatio < minVoicedRatio) {
+        return '声音断断续续的，坚持一口气读完会更棒哦～';
+      }
+    }
+    return null;
   }
 
   Future<bool> hasPermission() async {
