@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -34,6 +35,7 @@ class Pet3DViewer extends StatefulWidget {
     required this.modelPath,
     this.width,
     this.height,
+    this.onTap,
   });
 
   /// 模型资源路径（相对 asset 根），如 assets/3d/pet_1.glb
@@ -41,18 +43,33 @@ class Pet3DViewer extends StatefulWidget {
   final double? width;
   final double? height;
 
+  /// 点击模型回调
+  ///
+  /// viewer.html 内部按「位移 + 时长」双阈值区分「点击」与「拖拽旋转」，
+  /// 只有真正的点击才会触发本回调（拖拽转模型不会）。
+  final VoidCallback? onTap;
+
   @override
   State<Pet3DViewer> createState() => _Pet3DViewerState();
 }
 
 enum _LoadState { loading, ready, failed }
 
-class _Pet3DViewerState extends State<Pet3DViewer> {
+class _Pet3DViewerState extends State<Pet3DViewer>
+    with SingleTickerProviderStateMixin {
   _LoadState _state = _LoadState.loading;
   String? _errDetail;
   Timer? _timeoutTimer;
   int _retrySeed = 0;
   InAppWebViewController? _controller;
+
+  /// 点击弹跳动画控制器
+  ///
+  /// 【为什么用外层 Transform 而不是让模型自己动】
+  /// 当前 pet_*.glb 是**纯静态网格**（animations: 0 / skins: 0 / 无 morph targets），
+  /// 无法播放骨骼或形态键动画。所以改为在 WebView **外层**做整体变换 ——
+  /// 不依赖模型资产，观感上也足够表达「被点到了」。
+  late final AnimationController _bounceController;
 
   /// AssetLoader 域名下的资源根路径（指向 APK 内 flutter_assets）
   static const String _assetBase =
@@ -70,13 +87,23 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
     // 预热当前品种的 glb（约 5MB）：让 WebView 真正 fetch 时命中 asset 缓存，
     // 显著缩短首帧出现时间。失败静默，不影响加载流程。
     Pet3DPreloader.instance.warmModel(widget.modelPath);
+    _bounceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 520),
+    );
     _startTimeout();
   }
 
   @override
   void dispose() {
     _timeoutTimer?.cancel();
+    _bounceController.dispose();
     super.dispose();
+  }
+
+  /// 播放一次点击弹跳
+  void _playBounce() {
+    _bounceController.forward(from: 0);
   }
 
   void _startTimeout() {
@@ -147,65 +174,29 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // 出错后隐藏 WebView，避免残留白底
-          if (_state != _LoadState.failed)
-            InAppWebView(
-              key: ValueKey('pet3d-$_retrySeed'),
-              initialUrlRequest: URLRequest(url: WebUri(_viewerUrl)),
-              initialSettings: InAppWebViewSettings(
-                javaScriptEnabled: true,
-                transparentBackground: true,
-                // 通过 AssetLoader 以 https 协议访问，无需放开 file:// 权限
-                allowFileAccess: false,
-                allowFileAccessFromFileURLs: false,
-                allowUniversalAccessFromFileURLs: false,
-                webViewAssetLoader: WebViewAssetLoader(
-                  pathHandlers: [
-                    AssetsPathHandler(path: '/assets/'),
-                  ],
+          // ---------- 弹跳变换（外层，作用于整个 WebView）----------
+          //
+          // 【为什么用 translate + scale 而不是 rotate】
+          // WebView 的 rotate/3D 变换在部分低端机上容易触发昂贵的图层重绘，
+          // 而 translate/scale 是 GPU 合成友好操作，掉帧风险低得多。
+          // 位移幅度（18px）与缩放缓动（1.0 → 1.06 → 1.0）刻意做得克制，
+          // 既能明确感知「被点到了」，又不会显得浮夸。
+          AnimatedBuilder(
+            animation: _bounceController,
+            builder: (context, child) {
+              final t = _bounceController.value;
+              // sin 曲线：0 → 1 → 0，形成一次完整的「起跳-落回」
+              final lift = math.sin(t * math.pi);
+              return Transform.translate(
+                offset: Offset(0, -lift * 18),
+                child: Transform.scale(
+                  scale: 1.0 + lift * 0.06,
+                  child: child,
                 ),
-              ),
-              onWebViewCreated: (controller) {
-                _controller = controller;
-                // JS → Flutter：模型真实加载状态
-                controller.addJavaScriptHandler(
-                  handlerName: 'petModelState',
-                  callback: (data) {
-                    // flutter_inappwebview 6.x：callback 入参即 JS 传参列表本身
-                    // （非 { args: [...] } 包装对象），取 data[0] 为状态字符串。
-                    final state = (data.isNotEmpty) ? '${data.first}' : '';
-                    // data[1] 是 JS 侧附带的原因说明（如 loadfailure / draco-missing）
-                    final detail = (data.length > 1) ? '${data[1]}' : '';
-                    if (!mounted) return null;
-                    if (state == 'loaded') {
-                      _timeoutTimer?.cancel();
-                      setState(() => _state = _LoadState.ready);
-                    } else if (state == 'error') {
-                      _timeoutTimer?.cancel();
-                      setState(() {
-                        _state = _LoadState.failed;
-                        _errDetail = _friendlyError(detail);
-                      });
-                    }
-                    return null;
-                  },
-                );
-              },
-              onLoadStop: (controller, url) async {
-                await _injectModel(controller);
-              },
-              onReceivedError: (controller, request, error) {
-                // 仅主框架错误才算致命
-                if (!mounted) return;
-                if (request.isForMainFrame == true) {
-                  _timeoutTimer?.cancel();
-                  setState(() {
-                    _state = _LoadState.failed;
-                    _errDetail = error.description;
-                  });
-                }
-              },
-            ),
+              );
+            },
+            child: _buildWebView(),
+          ),
 
           // ---------- 加载中 ----------
           if (_state == _LoadState.loading)
@@ -255,6 +246,76 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
             ),
         ],
       ),
+    );
+  }
+
+  /// WebView 主体（抽出来是为了让弹跳动画能包在它外层）
+  Widget _buildWebView() {
+    // 出错后隐藏 WebView，避免残留白底
+    if (_state == _LoadState.failed) return const SizedBox.shrink();
+
+    return InAppWebView(
+      key: ValueKey('pet3d-$_retrySeed'),
+      initialUrlRequest: URLRequest(url: WebUri(_viewerUrl)),
+      initialSettings: InAppWebViewSettings(
+        javaScriptEnabled: true,
+        transparentBackground: true,
+        // 通过 AssetLoader 以 https 协议访问，无需放开 file:// 权限
+        allowFileAccess: false,
+        allowFileAccessFromFileURLs: false,
+        allowUniversalAccessFromFileURLs: false,
+        webViewAssetLoader: WebViewAssetLoader(
+          pathHandlers: [
+            AssetsPathHandler(path: '/assets/'),
+          ],
+        ),
+      ),
+      onWebViewCreated: (controller) {
+        _controller = controller;
+        // JS → Flutter：模型真实加载状态
+        controller.addJavaScriptHandler(
+          handlerName: 'petModelState',
+          callback: (data) {
+            // flutter_inappwebview 6.x：callback 入参即 JS 传参列表本身
+            // （非 { args: [...] } 包装对象），取 data[0] 为状态字符串。
+            final state = (data.isNotEmpty) ? '${data.first}' : '';
+            // data[1] 是 JS 侧附带的原因说明（如 loadfailure / draco-missing）
+            final detail = (data.length > 1) ? '${data[1]}' : '';
+            if (!mounted) return null;
+            if (state == 'loaded') {
+              _timeoutTimer?.cancel();
+              setState(() => _state = _LoadState.ready);
+            } else if (state == 'error') {
+              _timeoutTimer?.cancel();
+              setState(() {
+                _state = _LoadState.failed;
+                _errDetail = _friendlyError(detail);
+              });
+            } else if (state == 'tapped') {
+              // v1.3.0：模型被点击（viewer.html 已区分点击与拖拽旋转）
+              // ① 立即播放弹跳，给即时的反馈
+              // ② 上抛给页面层，由页面触发台词气泡
+              _playBounce();
+              widget.onTap?.call();
+            }
+            return null;
+          },
+        );
+      },
+      onLoadStop: (controller, url) async {
+        await _injectModel(controller);
+      },
+      onReceivedError: (controller, request, error) {
+        // 仅主框架错误才算致命
+        if (!mounted) return;
+        if (request.isForMainFrame == true) {
+          _timeoutTimer?.cancel();
+          setState(() {
+            _state = _LoadState.failed;
+            _errDetail = error.description;
+          });
+        }
+      },
     );
   }
 }
