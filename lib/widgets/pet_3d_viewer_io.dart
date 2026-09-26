@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
+import '../services/pet_3d_preloader.dart';
+
 /// Android/iOS 端 3D 宠物渲染：InAppWebView 加载本地 asset 的 viewer.html
 ///
 /// viewer.html 与 model-viewer.min.js、pet_*.glb 同位于 assets/3d/。
@@ -65,6 +67,9 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
   @override
   void initState() {
     super.initState();
+    // 预热当前品种的 glb（约 5MB）：让 WebView 真正 fetch 时命中 asset 缓存，
+    // 显著缩短首帧出现时间。失败静默，不影响加载流程。
+    Pet3DPreloader.instance.warmModel(widget.modelPath);
     _startTimeout();
   }
 
@@ -116,6 +121,24 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
     }
   }
 
+  /// 把 JS 上报的原始错误码翻译成家长/用户看得懂的提示。
+  ///
+  /// 保留原始码在括号里 —— 便于真机截图排查，又不至于让人一头雾水。
+  String _friendlyError(String detail) {
+    if (detail.isEmpty) return '模型加载失败';
+    final d = detail.toLowerCase();
+    if (d.contains('draco-missing')) {
+      return '3D 组件缺少解码器\n(请更新到最新版本)';
+    }
+    if (d.contains('loadfailure')) {
+      return '模型文件损坏或格式不支持';
+    }
+    if (d.contains('timeout-watchdog')) {
+      return '模型加载超时';
+    }
+    return '模型加载失败\n($detail)';
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -151,6 +174,8 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
                     // flutter_inappwebview 6.x：callback 入参即 JS 传参列表本身
                     // （非 { args: [...] } 包装对象），取 data[0] 为状态字符串。
                     final state = (data.isNotEmpty) ? '${data.first}' : '';
+                    // data[1] 是 JS 侧附带的原因说明（如 loadfailure / draco-missing）
+                    final detail = (data.length > 1) ? '${data[1]}' : '';
                     if (!mounted) return null;
                     if (state == 'loaded') {
                       _timeoutTimer?.cancel();
@@ -159,7 +184,7 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
                       _timeoutTimer?.cancel();
                       setState(() {
                         _state = _LoadState.failed;
-                        _errDetail = '模型解码失败';
+                        _errDetail = _friendlyError(detail);
                       });
                     }
                     return null;
