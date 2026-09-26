@@ -345,19 +345,39 @@ class HabitCheckInAdapter extends TypeAdapter<HabitCheckIn> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
+
+    // ---------- v1.4.0 旧数据迁移 ----------
+    //
+    // v1.3.0 及之前只写了 0~4 五个字段（没有验收状态）。
+    // 字段 27（verifyStatusRaw）缺失 ⇒ 这是旧记录 ⇒ 标记 isLegacy = true，
+    // 让 `HabitCheckIn.verifyStatus` 把它视为「已通过」。
+    //
+    // 为什么不直接默认 approved？因为若将来真有新记录漏写该字段，
+    // 会被误认为「已通过」而白送奖励。isLegacy 是显式标记，语义更准。
+    final hasVerifyField = fields.containsKey(27);
+    final rawStatus = fields[27] as int?;
+
     return HabitCheckIn(
       id: fields[0] as String,
       childId: fields[1] as String,
       habitId: fields[2] as String,
       checkInTime: fields[3] as DateTime,
       dateKey: fields[4] as String,
+      verifyStatusRaw: rawStatus,
+      verifiedAt: fields[28] as DateTime?,
+      rejectReason: fields[29] as String?,
+      rewardGiven: fields[30] as bool? ?? false,
+      // 旧记录：没有状态字段 ⇒ 当时是「点了即发」，等价于已通过
+      isLegacy: (fields[31] as bool?) ?? !hasVerifyField,
     );
   }
 
   @override
   void write(BinaryWriter writer, HabitCheckIn obj) {
+    // 动态字段数：新记录写 10 个字段（0~4 + 27~31），旧记录若
+    // 从未升级过也会被升级写入 —— 这是有意的，让数据格式尽快统一。
     writer
-      ..writeByte(5)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -367,7 +387,17 @@ class HabitCheckInAdapter extends TypeAdapter<HabitCheckIn> {
       ..writeByte(3)
       ..write(obj.checkInTime)
       ..writeByte(4)
-      ..write(obj.dateKey);
+      ..write(obj.dateKey)
+      ..writeByte(27)
+      ..write(obj.verifyStatusRaw)
+      ..writeByte(28)
+      ..write(obj.verifiedAt)
+      ..writeByte(29)
+      ..write(obj.rejectReason)
+      ..writeByte(30)
+      ..write(obj.rewardGiven)
+      ..writeByte(31)
+      ..write(obj.isLegacy);
   }
 }
 
