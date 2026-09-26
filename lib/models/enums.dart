@@ -114,6 +114,28 @@ enum ExchangeStatus {
   final String label;
 }
 
+/// 习惯打卡的验收状态（v1.4.0 新增）
+///
+/// **顺序即持久化值**（与 [HabitCheckIn.verifyStatusRaw] 对应），
+/// 因此 `pending` 必须是 0 —— 这样「字段缺失」时能安全兜底到「待验收」，
+/// 而不会把新打卡误判为已通过。
+///
+/// ⚠️ 不可调整顺序，只能在末尾追加。
+enum HabitVerifyStatus {
+  /// 孩子已打卡，等家长确认；奖励**尚未发放**
+  pending('待验收', '⏳'),
+
+  /// 家长已确认，奖励已发放
+  approved('已通过', '✅'),
+
+  /// 家长驳回（如「今天没真读」），可附原因；孩子补做后可重新提交
+  rejected('已驳回', '↩️');
+
+  const HabitVerifyStatus(this.label, this.emoji);
+  final String label;
+  final String emoji;
+}
+
 /// 习惯库分类（对应截图：学习 / 健康 / 生活 / 兴趣）
 enum HabitCategory {
   study('学习', '📚'),
