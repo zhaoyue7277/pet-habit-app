@@ -123,7 +123,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
               left: AppSizes.spaceSm,
               right: AppSizes.spaceSm,
             ),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.surface, // v2：改为纯白，替代原浅紫白
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(AppSizes.radiusXl),
@@ -137,7 +137,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
                 for (int i = 0; i < 2; i++)
                   Expanded(child: _buildTabItem(i)),
                 // 中间留空给悬浮按钮
-                const SizedBox(width: AppSizes.fabSize + AppSizes.spaceLg),
+                SizedBox(width: AppSizes.fabSize + AppSizes.spaceLg),
                 // 右侧两个 Tab
                 for (int i = 2; i < 4; i++)
                   Expanded(child: _buildTabItem(i)),
@@ -179,7 +179,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
               borderRadius: BorderRadius.circular(AppSizes.radiusCircle),
             ),
           ),
-          const SizedBox(height: AppSizes.spaceSm),
+          SizedBox(height: AppSizes.spaceSm),
           AnimatedScale(
             scale: selected ? 1.1 : 1.0,
             duration: AppSizes.durationFast,
@@ -189,7 +189,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
               color: selected ? AppColors.primary : AppColors.textHint,
             ),
           ),
-          const SizedBox(height: AppSizes.spaceXs),
+          SizedBox(height: AppSizes.spaceXs),
           Text(
             tab.label,
             style: TextStyle(
@@ -219,7 +219,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
           ),
           boxShadow: AppShadows.fab,
         ),
-        child: const Icon(
+        child: Icon(
           Icons.add_rounded,
           color: Colors.white,
           size: AppSizes.iconLg,
@@ -234,8 +234,8 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        margin: const EdgeInsets.all(AppSizes.spaceLg),
-        padding: const EdgeInsets.all(AppSizes.spaceXl),
+        margin: EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceXl),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -251,8 +251,8 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
                 borderRadius: BorderRadius.circular(AppSizes.radiusCircle),
               ),
             ),
-            const SizedBox(height: AppSizes.spaceXl),
-            const Text(
+            SizedBox(height: AppSizes.spaceXl),
+            Text(
               '想做点什么呢？',
               style: TextStyle(
                 fontSize: AppSizes.fontHeadline,
@@ -260,7 +260,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceXl),
+            SizedBox(height: AppSizes.spaceXl),
             // 3 列变 2×2：新增「朗读打卡」后若仍单行 4 列，
             // 在 360dp 窄屏上每格仅 ~70dp，图标+文字必然挤压换行。
             // 采用 2×2 等分网格，任意宽度下都保持舒适的点击区域。
@@ -278,7 +278,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
                     },
                   ),
                 ),
-                const SizedBox(width: AppSizes.spaceLg),
+                SizedBox(width: AppSizes.spaceLg),
                 Expanded(
                   child: _quickAction(
                     icon: Icons.edit_note_rounded,
@@ -292,7 +292,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
                 ),
               ],
             ),
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
             Row(
               children: [
                 Expanded(
@@ -306,7 +306,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
                     },
                   ),
                 ),
-                const SizedBox(width: AppSizes.spaceLg),
+                SizedBox(width: AppSizes.spaceLg),
                 Expanded(
                   child: _quickAction(
                     icon: Icons.mic_rounded,
@@ -320,7 +320,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
                 ),
               ],
             ),
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
           ],
         ),
       ),
@@ -336,7 +336,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceLg),
+        padding: EdgeInsets.symmetric(vertical: AppSizes.spaceLg),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
@@ -344,10 +344,10 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
         child: Column(
           children: [
             Icon(icon, size: 34, color: color),
-            const SizedBox(height: AppSizes.spaceSm),
+            SizedBox(height: AppSizes.spaceSm),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontLabel,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -368,7 +368,7 @@ class _HomeScaffoldState extends ConsumerState<HomeScaffold> {
     if (childId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text(
+          content: Text(
             '请先创建小朋友档案，再开始朗读打卡',
             style: TextStyle(fontSize: AppSizes.fontBody),
           ),
