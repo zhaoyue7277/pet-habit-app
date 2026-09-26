@@ -7,11 +7,15 @@ class Pet3DViewer extends StatelessWidget {
     required this.modelPath,
     this.width,
     this.height,
+    this.onTap,
   });
 
   final String modelPath;
   final double? width;
   final double? height;
+
+  /// 点击模型回调（不支持 3D 的平台直接忽略）
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
