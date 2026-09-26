@@ -128,11 +128,11 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: AppSizes.spaceSm),
+                    SizedBox(width: AppSizes.spaceSm),
 
                     // 优先级罗马数字
                     _priorityBadge(t.priority),
-                    const SizedBox(width: AppSizes.spaceSm),
+                    SizedBox(width: AppSizes.spaceSm),
 
                     // 难度标签
                     TagChip(
@@ -141,7 +141,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                       textColor: Colors.white,
                       fontSize: AppSizes.fontTiny,
                     ),
-                    const SizedBox(width: AppSizes.spaceSm),
+                    SizedBox(width: AppSizes.spaceSm),
 
                     // 重复任务喇叭图标（对应截图）
                     if (t.repeatFrequency != RepeatFrequency.once)
@@ -157,7 +157,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                     if (t.estimatedMinutes != null)
                       Text(
                         '${t.estimatedMinutes}分钟',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: AppSizes.fontCaption,
                           color: AppColors.textSecondary,
                         ),
@@ -165,7 +165,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                   ],
                 ),
 
-                const SizedBox(height: AppSizes.spaceLg),
+                SizedBox(height: AppSizes.spaceLg),
 
                 // ---------- 第二行：奖励 + 操作按钮 ----------
                 Row(
@@ -178,8 +178,8 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
                     // 已完成标记
                     if (done) ...[
-                      const SizedBox(width: AppSizes.spaceMd),
-                      const Text('✅ 已完成',
+                      SizedBox(width: AppSizes.spaceMd),
+                      Text('✅ 已完成',
                           style: TextStyle(
                             fontSize: AppSizes.fontCaption,
                             color: AppColors.success,
@@ -211,7 +211,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         return GestureDetector(
           onTap: widget.onStartTimer,
           child: Container(
-            padding: const EdgeInsets.symmetric(
+            padding: EdgeInsets.symmetric(
               horizontal: AppSizes.spaceLg,
               vertical: AppSizes.spaceSm,
             ),
@@ -223,7 +223,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             ),
             child: Text(
               _durationLabel,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontBody,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
@@ -236,7 +236,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       return GestureDetector(
         onTap: widget.onStartTimer,
         child: Container(
-          padding: const EdgeInsets.symmetric(
+          padding: EdgeInsets.symmetric(
             horizontal: AppSizes.spaceLg,
             vertical: AppSizes.spaceSm,
           ),
@@ -244,7 +244,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             color: AppColors.primaryLight,
             borderRadius: BorderRadius.circular(AppSizes.radiusCircle),
           ),
-          child: const Row(
+          child: Row(
             children: [
               Icon(Icons.play_arrow_rounded,
                   size: 20, color: AppColors.primaryDark),
@@ -275,7 +275,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.success, width: 2),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.check_rounded,
           color: AppColors.success,
           size: AppSizes.iconMd,
@@ -301,7 +301,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       ),
       child: Text(
         p.romanNumeral,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: AppSizes.fontTiny,
           fontWeight: FontWeight.w800,
           color: Colors.white,
