@@ -1,7 +1,7 @@
 name: pet_habit
 description: "儿童习惯养成与宠物陪伴 App —— 纯本地单机版"
 publish_to: 'none'
-version: 1.2.3+5
+version: 1.2.4+6
 
 environment:
   # Dart 3.x（对齐 Flutter 3.38 / Dart 3.10 稳定版）
@@ -58,7 +58,19 @@ flutter:
   assets:
     - assets/audio/
     - assets/images/
-    - assets/3d/            # 3D 宠物模型（Draco 压缩 glb）+ 本地化 model-viewer
+    # 3D 宠物模型 + 本地化的 model-viewer 与其 Draco 解码器。
+    #
+    # ⚠️ Flutter 的目录声明**不递归**：`assets/3d/` 只覆盖该层文件，
+    #    draco/ 子目录必须单独声明，否则解码器不会打进包。
+    #
+    # 为什么必须自带 Draco 解码器：
+    #   pet_*.glb 的 extensionsRequired 含 KHR_draco_mesh_compression，
+    #   而 model-viewer 的解码器**不内嵌**在 model-viewer.min.js 里 ——
+    #   它默认按需从 https://www.gstatic.com/draco/versioned/decoders/{ver}/
+    #   下载。国内网络不可达，且 APK 无 INTERNET 权限，导致模型永远解不出来。
+    #   这里自托管 v1.5.7 的 3 个文件，全程离线可用。
+    - assets/3d/
+    - assets/3d/draco/
   fonts:
     # ---------- 中文字体（Web 平台必需）----------
     # 背景：Web 版 Flutter 无法访问设备系统字体，若未声明中文字体，
