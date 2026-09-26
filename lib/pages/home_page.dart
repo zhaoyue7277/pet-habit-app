@@ -6,14 +6,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/models.dart';
 import '../routes/app_router.dart';
 import '../providers/core_providers.dart';
+import '../providers/habit_providers.dart';
 import '../providers/pet_providers.dart';
 import '../providers/task_providers.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_scale.dart';
 import '../theme/app_sizes.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/home_widgets.dart';
 import '../widgets/pet_avatar.dart';
 import '../widgets/task_card.dart';
+import 'learning_report_page.dart';
 import 'pomodoro_page.dart';
 import 'report_page.dart';
 import 'task_edit_page.dart';
@@ -112,17 +115,17 @@ class _HomePageState extends ConsumerState<HomePage> {
             // ---------- 一周日期条 ----------
             const SliverToBoxAdapter(child: WeekDateBar()),
 
-            const SliverToBoxAdapter(child: SizedBox(height: AppSizes.spaceLg)),
+            SliverToBoxAdapter(child: SizedBox(height: AppSizes.spaceLg)),
 
             // ---------- 宠物区 + 今日统计 ----------
             SliverToBoxAdapter(child: _buildPetSection()),
 
-            const SliverToBoxAdapter(child: SizedBox(height: AppSizes.spaceLg)),
+            SliverToBoxAdapter(child: SizedBox(height: AppSizes.spaceLg)),
 
             // ---------- 宠物对话气泡 ----------
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: AppSizes.spaceLg,
                 ),
                 child: PetDialogueBubble(
@@ -133,12 +136,25 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: AppSizes.spaceXl)),
+            // ---------- v1.4.0：学习报表入口提醒 ----------
+            //
+            // 【为什么用「提醒条」而不是自动弹窗？】
+            // 用户选的是「手动查看 + 入口提醒」。自动弹窗有两个问题：
+            //   1. 打断操作（孩子刚打开 App 想打卡，先被糊一脸报表）；
+            //   2. 很快就变成「每次都弹 → 直接点掉」的噪音。
+            // 提醒条则是「在那里，但不烦你」，孩子想看就点。
+            //
+            // 【什么时候才显示？】
+            // 只在晚上 18 点后（一天快结束，看日报才有意义），
+            // 或者有被驳回的打卡时（这件事需要立刻知道）。
+            const SliverToBoxAdapter(child: _ReportReminderBar()),
+
+            SliverToBoxAdapter(child: SizedBox(height: AppSizes.spaceXl)),
 
             // ---------- 待办任务标题 ----------
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: AppSizes.spaceLg,
                 ),
                 child: Row(
@@ -157,8 +173,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                         color: AppColors.primaryDark,
                       ),
                     ),
-                    const SizedBox(width: AppSizes.spaceSm),
-                    const Text(
+                    SizedBox(width: AppSizes.spaceSm),
+                    Text(
                       '待办任务',
                       style: TextStyle(
                         fontSize: AppSizes.fontHeadline,
@@ -169,7 +185,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     const Spacer(),
                     GestureDetector(
                       onTap: _openTaskCreate,
-                      child: const Icon(
+                      child: Icon(
                         Icons.add_circle_outline_rounded,
                         color: AppColors.primary,
                         size: AppSizes.iconMd,
@@ -180,13 +196,13 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: AppSizes.spaceMd)),
+            SliverToBoxAdapter(child: SizedBox(height: AppSizes.spaceMd)),
 
             // ---------- 任务列表（按科目分组） ----------
             ..._buildTaskGroups(),
 
             // 底部留白，避免被导航栏遮挡
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: SizedBox(height: AppSizes.bottomNavHeight + 40),
             ),
           ],
@@ -208,7 +224,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final petCardW = (screenW * 0.36).clamp(112.0, 150.0);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
+      padding: EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -216,7 +232,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           SizedBox(
             width: petCardW,
             child: Container(
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                 vertical: AppSizes.spaceMd,
                 horizontal: AppSizes.spaceSm,
               ),
@@ -234,18 +250,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                   // 心情值徽标（v2：矢量图标替代 ❤️ emoji）
                   Row(
                     children: [
-                      const SizedBox(width: AppSizes.spaceSm),
+                      SizedBox(width: AppSizes.spaceSm),
                       const Icon(
                         Icons.favorite_rounded,
                         size: 18,
                         color: AppColors.error,
                       ),
-                      const SizedBox(width: AppSizes.spaceXs),
+                      SizedBox(width: AppSizes.spaceXs),
                       Flexible(
                         child: Text(
                           '${live?.mood ?? 0}',
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: AppSizes.fontBody,
                             fontWeight: FontWeight.w800,
                             color: AppColors.accentDark,
@@ -254,7 +270,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ),
                     ],
                 ),
-                const SizedBox(height: AppSizes.spaceXs),
+                SizedBox(height: AppSizes.spaceXs),
 
                 // 宠物形象（点击触发互动动画）
                 GestureDetector(
@@ -271,7 +287,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
 
                 // 经验条（v2：矢量图标 + 暖黄进度条）
-                const SizedBox(height: AppSizes.spaceSm),
+                SizedBox(height: AppSizes.spaceSm),
                 AppProgressBar(
                   value: live?.expProgress ?? 0,
                   trailing: const Icon(
@@ -280,7 +296,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     color: AppColors.accentDark,
                   ),
                 ),
-                const SizedBox(height: AppSizes.spaceXs),
+                SizedBox(height: AppSizes.spaceXs),
 
                 // 等级与状态数值
                 Row(
@@ -288,16 +304,16 @@ class _HomePageState extends ConsumerState<HomePage> {
                   children: [
                     Text(
                       'Lv.${live?.pet.level ?? 1}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontCaption,
                         fontWeight: FontWeight.w700,
                         color: AppColors.secondaryDark,
                       ),
                     ),
-                    const SizedBox(width: AppSizes.spaceSm),
+                    SizedBox(width: AppSizes.spaceSm),
                     Text(
                       '🍚${live?.satiety ?? 0}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontCaption,
                         color: AppColors.textSecondary,
                       ),
@@ -316,7 +332,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
           ),
 
-          const SizedBox(width: AppSizes.spaceMd),
+          SizedBox(width: AppSizes.spaceMd),
 
           // ---------- 右侧：今日统计卡 ----------
           Expanded(
@@ -336,7 +352,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         SliverToBoxAdapter(
           child: Padding(
             // 底部额外留白：避开中央 FAB 与底部导航栏，避免视觉重叠
-            padding: const EdgeInsets.only(
+            padding: EdgeInsets.only(
               bottom: AppSizes.bottomNavHeight + 56,
             ),
             child: EmptyPlaceholder(
@@ -363,15 +379,15 @@ class _HomePageState extends ConsumerState<HomePage> {
             children: [
               // 科目标签
               Padding(
-                padding: const EdgeInsets.only(left: AppSizes.spaceLg),
+                padding: EdgeInsets.only(left: AppSizes.spaceLg),
                 child: SubjectTag(subject: entry.key),
               ),
-              const SizedBox(height: AppSizes.spaceSm),
+              SizedBox(height: AppSizes.spaceSm),
 
               // 该科目下的任务
               ...entry.value.map(
                 (task) => Padding(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding: EdgeInsets.fromLTRB(
                     AppSizes.spaceLg,
                     0,
                     AppSizes.spaceLg,
@@ -404,7 +420,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       SnackBar(
         content: Text(
           '太棒了！获得 ${task.rewardType.emoji} $reward',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: AppSizes.fontBody,
             fontWeight: FontWeight.w600,
           ),
@@ -447,8 +463,8 @@ class _HomePageState extends ConsumerState<HomePage> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        margin: const EdgeInsets.all(AppSizes.spaceLg),
-        padding: const EdgeInsets.all(AppSizes.spaceXl),
+        margin: EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceXl),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -457,7 +473,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
+            Text(
               '切换小朋友',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -466,20 +482,20 @@ class _HomePageState extends ConsumerState<HomePage> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceXl),
+            SizedBox(height: AppSizes.spaceXl),
 
             // 孩子列表
             ...children.map((c) {
               final isActive = c.id == active?.id;
               return Padding(
-                padding: const EdgeInsets.only(bottom: AppSizes.spaceMd),
+                padding: EdgeInsets.only(bottom: AppSizes.spaceMd),
                 child: GestureDetector(
                   onTap: () async {
                     await ref.read(childControllerProvider).switchChild(c.id);
                     if (ctx.mounted) Navigator.pop(ctx);
                   },
                   child: Container(
-                    padding: const EdgeInsets.all(AppSizes.spaceLg),
+                    padding: EdgeInsets.all(AppSizes.spaceLg),
                     decoration: BoxDecoration(
                       color: isActive
                           ? AppColors.primary.withValues(alpha: 0.15)
@@ -493,14 +509,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                       children: [
                         Text(c.avatarEmoji,
                             style: const TextStyle(fontSize: 32)),
-                        const SizedBox(width: AppSizes.spaceMd),
+                        SizedBox(width: AppSizes.spaceMd),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 c.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: AppSizes.fontBody,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textPrimary,
@@ -508,7 +524,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                               ),
                               Text(
                                 '💛${c.wishCoin}  🪙${c.petCoin}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: AppSizes.fontCaption,
                                   color: AppColors.textSecondary,
                                 ),
@@ -557,10 +573,10 @@ class _HomePageState extends ConsumerState<HomePage> {
               TextField(
                 controller: controller,
                 autofocus: true,
-                style: const TextStyle(fontSize: AppSizes.fontBody),
+                style: TextStyle(fontSize: AppSizes.fontBody),
                 decoration: const InputDecoration(hintText: '输入名字'),
               ),
-              const SizedBox(height: AppSizes.spaceLg),
+              SizedBox(height: AppSizes.spaceLg),
               // 头像选择
               Wrap(
                 spacing: AppSizes.spaceSm,
@@ -569,7 +585,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   return GestureDetector(
                     onTap: () => setDialogState(() => avatarIndex = i),
                     child: Container(
-                      padding: const EdgeInsets.all(AppSizes.spaceSm),
+                      padding: EdgeInsets.all(AppSizes.spaceSm),
                       decoration: BoxDecoration(
                         color: selected
                             ? AppColors.primary.withValues(alpha: 0.2)
@@ -631,6 +647,101 @@ class _HomePageState extends ConsumerState<HomePage> {
           onPressed: _showAddChildDialog,
           width: 220,
           child: const Text('创建档案'),
+        ),
+      ),
+    );
+  }
+}
+
+/// 学习报表入口提醒条（v1.4.0）
+///
+/// **显示条件（三者满足任一）：**
+/// 1. 有被驳回的打卡 → 必须让孩子立刻知道（绿色→橙色提醒）；
+/// 2. 晚上 18:00 之后 → 一天快结束，看日报最有意义；
+/// 3. 暂无（白天且无驳回）→ 完全不显示。
+///
+/// **为什么是 18 点？** 太早（比如中午）看日报，数据还是半截的，
+/// 容易让孩子觉得「我做得很少」而沮丧；18 点后基本一天的活动都
+/// 结束了，这时候的总结才是完整的、公平的。
+class _ReportReminderBar extends ConsumerWidget {
+  const _ReportReminderBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rejected = ref.watch(rejectedCheckInsTodayProvider);
+    final pendingCount = ref.watch(pendingCheckInCountProvider);
+    final isEvening = DateTime.now().hour >= 18;
+
+    // 三者都不满足 → 不占位
+    if (rejected.isEmpty && !isEvening && pendingCount == 0) {
+      return const SizedBox.shrink();
+    }
+
+    // ---------- 文案与配色按优先级决定 ----------
+    final String emoji;
+    final String text;
+    final Color bg;
+    final Color fg;
+
+    if (rejected.isNotEmpty) {
+      emoji = '↩️';
+      text = '有 ${rejected.length} 个打卡被退回了，补做一遍就能重交～';
+      bg = AppColors.warning.withValues(alpha: 0.16);
+      fg = AppColors.secondaryDark;
+    } else if (pendingCount > 0) {
+      emoji = '⏳';
+      text = '$pendingCount 个打卡等着爸爸妈妈确认…';
+      bg = AppColors.primary.withValues(alpha: 0.12);
+      fg = AppColors.primaryDark;
+    } else {
+      emoji = '📖';
+      text = '今天过得怎么样？看看宠物写的日报吧～';
+      bg = AppColors.info.withValues(alpha: 0.14);
+      fg = AppColors.primaryDark;
+    }
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSizes.spaceLg,
+        AppSizes.spaceLg,
+        AppSizes.spaceLg,
+        0,
+      ),
+      child: GestureDetector(
+        onTap: () => AppNavigator.push(
+          context,
+          const LearningReportPage(),
+        ),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSizes.spaceMd,
+            vertical: AppSizes.spaceSm,
+          ),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          ),
+          child: Row(
+            children: [
+              Text(emoji, style: TextStyle(fontSize: AppScale.s(18))),
+              SizedBox(width: AppSizes.spaceSm),
+              Expanded(
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: AppSizes.fontCaption,
+                    fontWeight: FontWeight.w700,
+                    color: fg,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: AppScale.s(20),
+                color: fg,
+              ),
+            ],
+          ),
         ),
       ),
     );
