@@ -103,7 +103,10 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
       var tracking = false;
 
       el.addEventListener('pointerdown', (event) {
-        final pe = event as html.PointerEvent;
+        // 注意：dart:html 里 clientX/clientY 定义在 MouseEvent 上
+        // （PointerEvent 继承自它，但静态类型下 analyzer 只认 MouseEvent，
+        //  写 html.PointerEvent 会报 undefined_getter）。
+        final pe = event as html.MouseEvent;
         tracking = true;
         downX = pe.clientX.toDouble();
         downY = pe.clientY.toDouble();
@@ -112,7 +115,7 @@ class _Pet3DViewerState extends State<Pet3DViewer> {
       el.addEventListener('pointerup', (event) {
         if (!tracking) return;
         tracking = false;
-        final pe = event as html.PointerEvent;
+        final pe = event as html.MouseEvent;
         final dx = (pe.clientX - downX).abs();
         final dy = (pe.clientY - downY).abs();
         final dt = DateTime.now().millisecondsSinceEpoch - downAt;
