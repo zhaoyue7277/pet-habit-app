@@ -11,12 +11,27 @@
     -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!--
-      注意：本 App 为纯本地单机应用，**不声明 android.permission.INTERNET**，
-      从系统层面保证任何数据都不会离开本机。
-      （录音为纯本地采集+本地回放，不需要网络。）
+      网络权限（3D 宠物渲染必需，但**不会产生任何真实外网流量**）。
 
-      同时，由于约束 6 最终采用「切出 App 即暂停计时 / 暂停白噪音」方案（方案 A），
-      番茄钟不依赖后台保活，因此**不需要任何前台服务权限**。
+      为什么必须加：
+        3D 宠物用 InAppWebView + WebViewAssetLoader 渲染，页面地址是
+            https://appassets.androidplatform.net/assets/flutter_assets/assets/3d/viewer.html
+        这是 Android 官方的「虚拟域名」方案 —— 请求会被本地拦截、直接从 APK
+        内 assets 读文件。但 Android WebView 对 https:// 请求会**先做权限检查**：
+        缺少 INTERNET 权限时，请求在网络栈层面就被拒绝，
+        WebViewClient.shouldInterceptRequest 根本不会被调用，
+        页面永远加载不出来（v1.2.3 真机「模型加载超时」的根因之一）。
+
+      隐私说明：
+        唯一使用网络的组件是上面这个 WebView，且它请求的
+        appassets.androidplatform.net 是系统保留域名，不解析到任何真实服务器，
+        请求 100% 由 App 本地拦截。用户数据、录音、习惯记录依然全部只存本机
+        （Hive / IndexedDB），任何时刻都不会外传。
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!--
+      说明：番茄钟不依赖后台保活（约束 6 采用「切出 App 即暂停计时」方案），
+      因此不需要任何前台服务权限。
     -->
 
     <application
