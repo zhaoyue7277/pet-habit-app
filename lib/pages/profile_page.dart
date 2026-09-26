@@ -3,17 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/models.dart';
 import '../providers/core_providers.dart';
+import '../providers/habit_providers.dart';
 import '../providers/pet_providers.dart';
 import '../providers/settings_providers.dart';
 import '../providers/shop_providers.dart';
 import '../routes/app_router.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_scale.dart';
 import '../theme/app_sizes.dart';
 import '../widgets/common_widgets.dart';
 import '../widgets/pet_avatar.dart';
 import '../widgets/pin_dialog.dart';
 import 'achievement_page.dart';
+import 'check_in_verify_page.dart';
 import 'diary_page.dart';
+import 'learning_report_page.dart';
 import 'pet_center_page.dart';
 import 'recording_page.dart';
 import 'report_page.dart';
@@ -42,7 +46,7 @@ class ProfilePage extends ConsumerWidget {
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsets.fromLTRB(
           AppSizes.spaceLg,
           AppSizes.spaceLg,
           AppSizes.spaceLg,
@@ -53,17 +57,17 @@ class ProfilePage extends ConsumerWidget {
             // ---------- 孩子信息卡 ----------
             _buildProfileCard(context, ref, child),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 功能入口网格 ----------
             _buildMenuGrid(context, ref),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 设置区 ----------
             _buildSettingsSection(context, ref),
 
-            const SizedBox(height: AppSizes.spaceXxl),
+            SizedBox(height: AppSizes.spaceXxl),
           ],
         ),
       ),
@@ -94,7 +98,7 @@ class ProfilePage extends ConsumerWidget {
                   style: const TextStyle(fontSize: 36),
                 ),
               ),
-              const SizedBox(width: AppSizes.spaceLg),
+              SizedBox(width: AppSizes.spaceLg),
 
               Expanded(
                 child: Column(
@@ -102,16 +106,16 @@ class ProfilePage extends ConsumerWidget {
                   children: [
                     Text(
                       child.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontTitle,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: AppSizes.spaceXs),
+                    SizedBox(height: AppSizes.spaceXs),
                     Text(
                       '已加入 ${DateTime.now().difference(child.createdAt).inDays} 天',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontCaption,
                         color: AppColors.textHint,
                       ),
@@ -129,11 +133,11 @@ class ProfilePage extends ConsumerWidget {
             ],
           ),
 
-          const SizedBox(height: AppSizes.spaceLg),
+          SizedBox(height: AppSizes.spaceLg),
 
           // ---------- 双币余额 ----------
           Container(
-            padding: const EdgeInsets.symmetric(
+            padding: EdgeInsets.symmetric(
               vertical: AppSizes.spaceMd,
             ),
             decoration: BoxDecoration(
@@ -185,10 +189,10 @@ class ProfilePage extends ConsumerWidget {
     return Column(
       children: [
         Text(emoji, style: const TextStyle(fontSize: 20)),
-        const SizedBox(height: AppSizes.spaceXs),
+        SizedBox(height: AppSizes.spaceXs),
         Text(
           '$value',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: AppSizes.fontHeadline,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
@@ -196,7 +200,7 @@ class ProfilePage extends ConsumerWidget {
         ),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: AppSizes.fontTiny,
             color: AppColors.textHint,
           ),
@@ -207,7 +211,8 @@ class ProfilePage extends ConsumerWidget {
 
   /// 功能入口网格
   Widget _buildMenuGrid(BuildContext context, WidgetRef ref) {
-    final pendingCount = ref.watch(pendingExchangeLogsProvider).length;
+    // v1.4.0：兑换不再需要审批，角标改看「待验收打卡数」
+    final pendingCheckIns = ref.watch(pendingCheckInCountProvider);
 
     final menus = [
       _MenuEntry(
@@ -228,6 +233,13 @@ class ProfilePage extends ConsumerWidget {
         color: AppColors.info,
         onTap: () => AppNavigator.push(context, const ReportPage()),
       ),
+      // ---------- v1.4.0 新增：给孩子看的学习日报/周报 ----------
+      _MenuEntry(
+        emoji: '📖',
+        label: '学习报表',
+        color: AppColors.primary,
+        onTap: () => AppNavigator.push(context, const LearningReportPage()),
+      ),
       _MenuEntry(
         emoji: '🎤',
         label: '朗读打卡',
@@ -240,11 +252,18 @@ class ProfilePage extends ConsumerWidget {
         color: AppColors.secondary,
         onTap: () => AppNavigator.push(context, const DiaryPage()),
       ),
+      // ---------- v1.4.0 新增：打卡验收队列 ----------
+      _MenuEntry(
+        emoji: '✅',
+        label: '打卡验收',
+        color: AppColors.success,
+        badge: pendingCheckIns,
+        onTap: () => AppNavigator.push(context, const CheckInVerifyPage()),
+      ),
       _MenuEntry(
         emoji: '📋',
-        label: '兑换审批',
+        label: '兑换记录',
         color: AppColors.warning,
-        badge: pendingCount,
         onTap: () => _showExchangeApproval(context, ref),
       ),
       _MenuEntry(
@@ -259,7 +278,7 @@ class ProfilePage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '功能',
             style: TextStyle(
               fontSize: AppSizes.fontHeadline,
@@ -267,14 +286,19 @@ class ProfilePage extends ConsumerWidget {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: AppSizes.spaceLg),
+          SizedBox(height: AppSizes.spaceLg),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              // v1.4.0：列数按屏宽分档，避免窄屏上高度文字被挤掉
+              crossAxisCount: AppScale.columnsFor(
+                narrowColumns: 3,
+                normalColumns: 4,
+                wideColumns: 4,
+              ),
               mainAxisSpacing: AppSizes.spaceLg,
-              crossAxisSpacing: AppSizes.spaceLg,
+              crossAxisSpacing: AppSizes.spaceMd,
               childAspectRatio: 0.95,
             ),
             itemCount: menus.length,
@@ -319,7 +343,7 @@ class ProfilePage extends ConsumerWidget {
                     ),
                     child: Text(
                       '${entry.badge}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontTiny,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -329,10 +353,10 @@ class ProfilePage extends ConsumerWidget {
                 ),
             ],
           ),
-          const SizedBox(height: AppSizes.spaceSm),
+          SizedBox(height: AppSizes.spaceSm),
           Text(
             entry.label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: AppSizes.fontCaption,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -357,14 +381,14 @@ class ProfilePage extends ConsumerWidget {
             value: '${settings.defaultPomodoroMinutes} 分钟',
             onTap: () => _pickPomodoroMinutes(context, ref, settings),
           ),
-          const Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
+          Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
           _settingTile(
             icon: '🚪',
             title: '离开宽限时间',
             value: '${settings.allowAbandonMinutes} 分钟',
             onTap: () => _pickAbandonMinutes(context, ref, settings),
           ),
-          const Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
+          Divider(height: 1, indent: AppSizes.spaceLg, endIndent: AppSizes.spaceLg),
           _settingTile(
             icon: '🔐',
             title: '家长密码',
@@ -386,17 +410,17 @@ class ProfilePage extends ConsumerWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
+        padding: EdgeInsets.symmetric(
           horizontal: AppSizes.spaceLg,
           vertical: AppSizes.spaceLg,
         ),
         child: Row(
           children: [
             Text(icon, style: const TextStyle(fontSize: 22)),
-            const SizedBox(width: AppSizes.spaceMd),
+            SizedBox(width: AppSizes.spaceMd),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontBody,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -405,12 +429,12 @@ class ProfilePage extends ConsumerWidget {
             const Spacer(),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontBody,
                 color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(width: AppSizes.spaceXs),
+            SizedBox(width: AppSizes.spaceXs),
             const Icon(Icons.chevron_right_rounded,
                 color: AppColors.textHint, size: 22),
           ],
@@ -513,10 +537,16 @@ class ProfilePage extends ConsumerWidget {
     }
   }
 
-  /// 兑换审批面板
+  /// 兑换记录面板（v1.4.0：从「审批」改为「只读记录」）
+  ///
+  /// **为什么不再审批？**
+  /// 代币管控点在「获取」而非「消耗」。币已发给孩子，花法是孩子的
+  /// 自主权，家长在这里只剩「知情权」——看得到他换了什么即可。
+  ///
+  /// 现实奖励仍需要家长**线下兑现**（带他去游乐园之类），
+  /// 但那件事发生在生活里，不需要 App 里的一个「同意」按钮。
   void _showExchangeApproval(BuildContext context, WidgetRef ref) {
     final logs = ref.watch(exchangeLogsProvider);
-    final pending = logs.where((e) => e.status == ExchangeStatus.pending).toList();
 
     showModalBottomSheet<void>(
       context: context,
@@ -526,8 +556,8 @@ class ProfilePage extends ConsumerWidget {
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.75,
         ),
-        margin: const EdgeInsets.all(AppSizes.spaceLg),
-        padding: const EdgeInsets.all(AppSizes.spaceXl),
+        margin: EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceXl),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -535,99 +565,84 @@ class ProfilePage extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              '兑换审批',
+            Text(
+              '兑换记录',
               style: TextStyle(
                 fontSize: AppSizes.fontTitle,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceXs),
+            Text(
+              '孩子的选择由他自己负责，这里只做记录',
+              style: TextStyle(
+                fontSize: AppSizes.fontCaption,
+                color: AppColors.textHint,
+              ),
+            ),
+            SizedBox(height: AppSizes.spaceLg),
 
-            if (pending.isEmpty)
+            if (logs.isEmpty)
               const EmptyPlaceholder(
-                emoji: '✅',
-                text: '暂无待审批的兑换申请',
+                emoji: '🛍️',
+                text: '还没有兑换记录',
               )
             else
               Flexible(
                 child: ListView.separated(
                   shrinkWrap: true,
-                  itemCount: pending.length,
+                  itemCount: logs.length,
                   separatorBuilder: (_, __) =>
-                      const SizedBox(height: AppSizes.spaceMd),
+                      SizedBox(height: AppSizes.spaceMd),
                   itemBuilder: (_, i) {
-                    final log = pending[i];
+                    final log = logs[i];
                     return Container(
-                      padding: const EdgeInsets.all(AppSizes.spaceLg),
+                      padding: EdgeInsets.all(AppSizes.spaceLg),
                       decoration: BoxDecoration(
                         color: AppColors.surfaceVariant,
                         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                       ),
-                      child: Column(
+                      child: Row(
                         children: [
-                          Row(
-                            children: [
-                              Text(log.itemIcon,
-                                  style: const TextStyle(fontSize: 32)),
-                              const SizedBox(width: AppSizes.spaceMd),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      log.itemName,
-                                      style: const TextStyle(
-                                        fontSize: AppSizes.fontBody,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                    Text(
-                                      '花费 ${log.costCoin} ${log.coinType.emoji}',
-                                      style: const TextStyle(
-                                        fontSize: AppSizes.fontCaption,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSizes.spaceMd),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: () async {
-                                    await ref
-                                        .read(shopControllerProvider)
-                                        .approveExchange(log.id, false);
-                                    if (ctx.mounted) Navigator.pop(ctx);
-                                  },
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.error,
-                                    side: const BorderSide(
-                                        color: AppColors.error, width: 2),
+                          Text(log.itemIcon,
+                              style: const TextStyle(fontSize: 32)),
+                          SizedBox(width: AppSizes.spaceMd),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  log.itemName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: AppSizes.fontBody,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
                                   ),
-                                  child: const Text('拒绝'),
                                 ),
-                              ),
-                              const SizedBox(width: AppSizes.spaceMd),
-                              Expanded(
-                                child: FilledButton(
-                                  onPressed: () async {
-                                    await ref
-                                        .read(shopControllerProvider)
-                                        .approveExchange(log.id, true);
-                                    if (ctx.mounted) Navigator.pop(ctx);
-                                  },
-                                  child: const Text('同意'),
+                                SizedBox(height: AppSizes.spaceXs),
+                                Text(
+                                  '花费 ${log.costCoin} ${log.coinType.emoji} · ${_fmtDate(log.exchangeTime)}',
+                                  style: TextStyle(
+                                    fontSize: AppSizes.fontCaption,
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
+                          ),
+                          // 状态标签（v1.4.0 起基本恒为「已完成」）
+                          TagChip(
+                            text: log.status.label,
+                            color: log.status == ExchangeStatus.done
+                                ? AppColors.successLight
+                                : AppColors.surfaceVariant,
+                            textColor: log.status == ExchangeStatus.done
+                                ? AppColors.success
+                                : AppColors.textSecondary,
+                            fontSize: AppSizes.fontTiny,
                           ),
                         ],
                       ),
@@ -641,6 +656,9 @@ class ProfilePage extends ConsumerWidget {
     );
   }
 
+  /// 日期简写：`M月D日`
+  static String _fmtDate(DateTime dt) => '${dt.month}月${dt.day}日';
+
   /// 家长设置面板
   void _showParentSettings(BuildContext context, WidgetRef ref) {
     final controller = ref.read(shopControllerProvider);
@@ -650,8 +668,8 @@ class ProfilePage extends ConsumerWidget {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        margin: const EdgeInsets.all(AppSizes.spaceLg),
-        padding: const EdgeInsets.all(AppSizes.spaceXl),
+        margin: EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceXl),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -660,7 +678,7 @@ class ProfilePage extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
+            Text(
               '家长设置',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -669,11 +687,11 @@ class ProfilePage extends ConsumerWidget {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceXl),
+            SizedBox(height: AppSizes.spaceXl),
 
             // 防作弊说明
             Container(
-              padding: const EdgeInsets.all(AppSizes.spaceLg),
+              padding: EdgeInsets.all(AppSizes.spaceLg),
               decoration: BoxDecoration(
                 color: AppColors.info.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(AppSizes.radiusMd),
@@ -681,7 +699,7 @@ class ProfilePage extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
                       Text('🛡️', style: TextStyle(fontSize: 18)),
                       SizedBox(width: AppSizes.spaceSm),
@@ -695,12 +713,12 @@ class ProfilePage extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSizes.spaceSm),
+                  SizedBox(height: AppSizes.spaceSm),
                   Text(
                     '孩子在专注时切出 App 超过 '
                     '${settings.allowAbandonMinutes} 分钟，'
                     '本次计时将自动作废，不发放任何奖励。',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: AppSizes.fontCaption,
                       color: AppColors.textSecondary,
                       height: 1.5,
@@ -709,7 +727,7 @@ class ProfilePage extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             if (!controller.hasPin)
               FilledButton(
@@ -767,8 +785,8 @@ Widget _optionSheet(
     constraints: BoxConstraints(
       maxHeight: MediaQuery.of(context).size.height * 0.7,
     ),
-    margin: const EdgeInsets.all(AppSizes.spaceLg),
-    padding: const EdgeInsets.all(AppSizes.spaceXl),
+    margin: EdgeInsets.all(AppSizes.spaceLg),
+    padding: EdgeInsets.all(AppSizes.spaceXl),
     decoration: BoxDecoration(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -778,24 +796,24 @@ Widget _optionSheet(
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: AppSizes.fontHeadline,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
           ),
         ),
         if (subtitle != null) ...[
-          const SizedBox(height: AppSizes.spaceXs),
+          SizedBox(height: AppSizes.spaceXs),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: AppSizes.fontCaption,
               color: AppColors.textHint,
             ),
           ),
         ],
-        const SizedBox(height: AppSizes.spaceLg),
+        SizedBox(height: AppSizes.spaceLg),
         Flexible(
           child: SingleChildScrollView(
             child: Column(
@@ -804,8 +822,8 @@ Widget _optionSheet(
                 return GestureDetector(
                   onTap: () => onSelected(i),
                   child: Container(
-                    margin: const EdgeInsets.only(bottom: AppSizes.spaceSm),
-                    padding: const EdgeInsets.all(AppSizes.spaceLg),
+                    margin: EdgeInsets.only(bottom: AppSizes.spaceSm),
+                    padding: EdgeInsets.all(AppSizes.spaceLg),
                     decoration: BoxDecoration(
                       color: selected
                           ? AppColors.primary.withValues(alpha: 0.15)
@@ -816,7 +834,7 @@ Widget _optionSheet(
                       children: [
                         Text(
                           options[i],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: AppSizes.fontBody,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
