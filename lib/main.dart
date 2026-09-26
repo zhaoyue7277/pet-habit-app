@@ -8,6 +8,7 @@ import 'services/hive_init.dart';
 import 'services/pet_3d_preloader.dart';
 import 'services/recording_service.dart';
 import 'services/white_noise_service.dart';
+import 'theme/app_scale.dart';
 import 'theme/app_theme.dart';
 import 'widgets/home_scaffold.dart';
 
@@ -82,17 +83,38 @@ class PetHabitApp extends ConsumerWidget {
       // ---------- 主题 ----------
       theme: AppTheme.light(),
 
-      // ---------- 锁定文字缩放（v1.2 修复真机布局错乱/截断） ----------
-      // 部分手机系统字号设为「大/超大」时，Flutter 默认跟随系统缩放，
-      // 导致「习惯乐园」Tab、「待办任务」标题、日期数字等被挤出容器
-      // （换行 / 截断 / 与按钮重叠）。儿童 App 的布局按固定字号设计，
-      // 这里统一锁定为不缩放，保证任何系统字号设置下布局稳定。
+      // ---------- 全局屏幕自适应 + 锁定文字缩放 ----------
+      //
+      // 【v1.4.0 关键改造：从「锁死系统字号」升级为「按屏幕自适应」】
+      //
+      // 背景：v1.2 时曾把 textScaler 锁为 noScaling，用来修「系统字号设大
+      // 导致布局错乱」。但那只解决了「用户改系统字号」这一种情况，
+      // **没有解决「屏幕本身就大小不一」这个更根本的问题**——所有设备
+      // 共用一套绝对尺寸，窄屏上文字被截断成「课外…」。
+      //
+      // 现在改为两层策略：
+      //   1. AppScale.init(context) —— 按屏幕短边算出 0.88~1.12 的缩放
+      //      因子，AppSizes 的所有尺寸据此动态取值（见 theme/app_scale.dart）；
+      //   2. textScaler 依然锁定 —— 因为我们的字号已按屏幕调过一轮，
+      //      再叠加系统字号会让两套缩放互相打架。锁定的目的是「只让
+      //      App 控制字号」，而不是「禁止自适应」。
+      //
+      // 注意：这里用 LayoutBuilder 而非直接读 MediaQuery，是因为
+      // builder 回调的 context 在 MaterialApp 内部，MediaQuery 可能
+      // 尚未插入；用 LayoutBuilder 拿到的 constraints 是最可靠的。
       builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.noScaling,
-          ),
-          child: child ?? const SizedBox.shrink(),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.noScaling,
+              ),
+              child: _ScaleBootstrap(
+                size: constraints.biggest,
+                child: child ?? const SizedBox.shrink(),
+              ),
+            );
+          },
         );
       },
 
@@ -118,4 +140,67 @@ class PetHabitApp extends ConsumerWidget {
       // 若使用自定义 route（如 SlidePageRoute），同样实现了相同的位移动画。
     );
   }
+}
+
+/// 缩放因子注入器（v1.4.0 新增）
+///
+/// **职责**：在每帧布局前，把当前屏幕尺寸写进 [AppScale]，让
+/// [AppSizes] 的所有 getter 能在同一帧内取到正确的缩放值。
+///
+/// **为什么必须是一个 StatefulWidget，而不是直接在上面调静态方法？**
+///
+/// `AppScale.init()` 会写静态字段。如果在 `build` 里直接调用，会变成
+/// 「读静态值 → 改静态值 → 同一帧内被下游读取」，虽然在本场景可用，
+/// 但属于「build 期间产生副作用」，Flutter 的调试断言在某些情况下
+/// 会报 `setState()/markNeedsBuild() called during build` 类问题。
+///
+/// 这里改在 `didChangeDependencies`（尺寸变化时系统会触发它）里注入，
+/// 时机安全：它在 build 之前执行，下游 widget 构建时读到的即为最新值。
+///
+/// **为什么用传入的 `size` 而不是 `MediaQuery.of(context).size`？**
+/// 外层 `LayoutBuilder` 给的 constraints 是本层可用的**权威**尺寸，
+/// 而 `MediaQuery` 在这层可能还带着「未扣减系统栏」的原始值，
+/// 两者在部分设备上会有差异。用 constraints 更准。
+class _ScaleBootstrap extends StatefulWidget {
+  const _ScaleBootstrap({required this.size, required this.child});
+
+  /// 本层可用尺寸（来自外层 LayoutBuilder 的 constraints.biggest）
+  final Size size;
+
+  /// 实际页面内容
+  final Widget child;
+
+  @override
+  State<_ScaleBootstrap> createState() => _ScaleBootstrapState();
+}
+
+class _ScaleBootstrapState extends State<_ScaleBootstrap> {
+  /// 上一次注入的尺寸，用于跳过「尺寸没变」的无谓刷新
+  Size _lastSize = Size.zero;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _applyScaleIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ScaleBootstrap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _applyScaleIfNeeded();
+  }
+
+  /// 尺寸变化时刷新缩放因子。
+  ///
+  /// 屏幕旋转 / 分屏 / 折叠屏展开都会让 `size` 变化，从而走到这里。
+  void _applyScaleIfNeeded() {
+    final size = widget.size;
+    if (size == _lastSize) return;
+    _lastSize = size;
+    // 直接按约束尺寸算，不依赖 context 里的 MediaQuery。
+    AppScale.initFromSize(size);
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
