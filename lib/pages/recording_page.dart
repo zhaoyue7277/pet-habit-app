@@ -38,7 +38,7 @@ class RecordingPage extends ConsumerStatefulWidget {
 enum _Phase { idle, recording, preview, saving }
 
 class _RecordingPageState extends ConsumerState<RecordingPage>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final RecordingService _service = RecordingService.instance;
 
   _Phase _phase = _Phase.idle;
@@ -71,15 +71,27 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
     _completeSub = _service.onPlaybackComplete.listen((_) {
       if (mounted) setState(() => _playing = false);
     });
+    // ---------- v1.4.0 录音防作弊：注册生命周期监听 ----------
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
     _completeSub?.cancel();
     _pulseCtrl.dispose();
     _service.stopPlayback();
     super.dispose();
+  }
+
+  /// 生命周期回调 → 转给录音服务做防作弊判定
+  ///
+  /// 只做「转发」，真正的判定逻辑在 `RecordingService` 里，
+  /// 这样将来若别的页面也要录音，能复用同一套规则。
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _service.onAppLifecycleChanged(state);
   }
 
   // ==================== 交互 ====================
@@ -131,6 +143,9 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
   }
 
   /// 采样当前音量，推入波形缓冲
+  ///
+  /// v1.4.0 起 `currentAmplitude()` 内部会顺带喂防作弊统计，
+  /// 这里无需额外处理，照旧采样即可。
   Future<void> _sampleAmplitude() async {
     final level = await _service.currentAmplitude();
     if (!mounted) return;
@@ -155,6 +170,25 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
         _phase = _Phase.idle;
         _durationMs = 0;
         _error = '没有录到声音，再试一次吧～';
+      });
+      return;
+    }
+
+    // ---------- v1.4.0 防作弊判定 ----------
+    // 时长 / 发声时长 / 发声占比 / 是否中途切出，四条任一不过即拒。
+    final reason = _service.validate(
+      minValidMs: Recording.minValidDurationMs,
+    );
+    if (reason != null) {
+      // 丢弃这段音频，不给任何奖励（但保留给孩子的解释）
+      await _service.cancel();
+      if (!mounted) return;
+      setState(() {
+        _phase = _Phase.idle;
+        _result = null;
+        _durationMs = 0;
+        _levelsBuffer.clear();
+        _error = reason;
       });
       return;
     }
@@ -249,7 +283,7 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
           parts.isEmpty
               ? '录音已保存，下次多读一会儿吧～'
               : '朗读完成！获得 ${parts.join('  ')}',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: AppSizes.fontBody,
             fontWeight: FontWeight.w600,
           ),
@@ -279,29 +313,29 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(AppSizes.spaceLg),
+          padding: EdgeInsets.all(AppSizes.spaceLg),
           child: Column(
             children: [
               if (widget.habit != null) _buildHabitBanner(),
-              const SizedBox(height: AppSizes.spaceLg),
+              SizedBox(height: AppSizes.spaceLg),
               _buildPetStage(pet),
-              const SizedBox(height: AppSizes.spaceLg),
+              SizedBox(height: AppSizes.spaceLg),
               _buildTimer(),
-              const SizedBox(height: AppSizes.spaceLg),
+              SizedBox(height: AppSizes.spaceLg),
               _buildWaveform(),
-              const SizedBox(height: AppSizes.spaceXl),
+              SizedBox(height: AppSizes.spaceXl),
               _buildMainButton(),
-              const SizedBox(height: AppSizes.spaceMd),
+              SizedBox(height: AppSizes.spaceMd),
               _buildHint(),
               if (_error != null) ...[
-                const SizedBox(height: AppSizes.spaceLg),
+                SizedBox(height: AppSizes.spaceLg),
                 _buildError(),
               ],
               if (_phase == _Phase.preview) ...[
-                const SizedBox(height: AppSizes.spaceXl),
+                SizedBox(height: AppSizes.spaceXl),
                 _buildPreviewActions(child?.name ?? '小朋友'),
               ],
-              const SizedBox(height: AppSizes.spaceXxl),
+              SizedBox(height: AppSizes.spaceXxl),
             ],
           ),
         ),
@@ -313,19 +347,19 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
   Widget _buildHabitBanner() {
     final habit = widget.habit!;
     return AppCard(
-      padding: const EdgeInsets.symmetric(
+      padding: EdgeInsets.symmetric(
         horizontal: AppSizes.spaceLg,
         vertical: AppSizes.spaceMd,
       ),
       child: Row(
         children: [
           Text(habit.iconEmoji, style: const TextStyle(fontSize: 24)),
-          const SizedBox(width: AppSizes.spaceMd),
+          SizedBox(width: AppSizes.spaceMd),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '本次朗读将完成习惯打卡',
                   style: TextStyle(
                     fontSize: AppSizes.fontCaption,
@@ -337,7 +371,7 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
                   habit.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSizes.fontLabel,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -428,17 +462,17 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
           ),
         ),
         if (recording) ...[
-          const SizedBox(height: AppSizes.spaceXs),
+          SizedBox(height: AppSizes.spaceXs),
           Text(
             over ? '很棒！可以停下来保存啦' : '再多读一会儿，满 3 秒就算有效哦',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: AppSizes.fontCaption,
               color: AppColors.textSecondary,
             ),
           ),
         ],
         if (_phase == _Phase.preview) ...[
-          const SizedBox(height: AppSizes.spaceXs),
+          SizedBox(height: AppSizes.spaceXs),
           Text(
             sec >= 3 ? '这段朗读很棒！' : '有点短，建议重录一次',
             style: TextStyle(
@@ -540,7 +574,7 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
                   const SizedBox(height: 2),
                   Text(
                     recording ? '停止' : '开始朗读',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: AppSizes.fontCaption,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textOnPrimary,
@@ -566,7 +600,7 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
     return Text(
       hint,
       textAlign: TextAlign.center,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: AppSizes.fontCaption,
         color: AppColors.textHint,
       ),
@@ -576,7 +610,7 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
   /// 错误提示
   Widget _buildError() {
     return Container(
-      padding: const EdgeInsets.all(AppSizes.spaceMd),
+      padding: EdgeInsets.all(AppSizes.spaceMd),
       decoration: BoxDecoration(
         color: AppColors.warning.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
@@ -584,11 +618,11 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
       child: Row(
         children: [
           const Text('⚠️', style: TextStyle(fontSize: 18)),
-          const SizedBox(width: AppSizes.spaceSm),
+          SizedBox(width: AppSizes.spaceSm),
           Expanded(
             child: Text(
               _error!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontCaption,
                 color: AppColors.textSecondary,
                 height: 1.4,
@@ -618,7 +652,7 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
                 ),
               ),
             ),
-            const SizedBox(width: AppSizes.spaceMd),
+            SizedBox(width: AppSizes.spaceMd),
             Expanded(
               child: BouncyButton(
                 height: AppSizes.buttonSmallHeight,
@@ -629,7 +663,7 @@ class _RecordingPageState extends ConsumerState<RecordingPage>
             ),
           ],
         ),
-        const SizedBox(height: AppSizes.spaceMd),
+        SizedBox(height: AppSizes.spaceMd),
         BouncyButton(
           width: double.infinity,
           onPressed: _save,
