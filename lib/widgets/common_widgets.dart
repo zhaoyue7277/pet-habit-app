@@ -9,7 +9,7 @@ import '../theme/app_sizes.dart';
 ///
 /// 对应截图：任务卡上的「💛 ×15」、首页的「💛+0 🪙+0」。
 class CoinLabel extends StatelessWidget {
-  const CoinLabel({
+  CoinLabel({
     super.key,
     required this.type,
     required this.amount,
@@ -32,7 +32,7 @@ class CoinLabel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(emoji, style: TextStyle(fontSize: fontSize)),
-        const SizedBox(width: AppSizes.spaceXs),
+        SizedBox(width: AppSizes.spaceXs),
         Text(
           '${showPlus && amount > 0 ? '+' : ''}$amount',
           style: TextStyle(
@@ -59,10 +59,10 @@ class CoinLabel extends StatelessWidget {
 
 /// 通用圆角卡片
 class AppCard extends StatelessWidget {
-  const AppCard({
+  AppCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(AppSizes.spaceLg),
+    this.padding = EdgeInsets.all(AppSizes.spaceLg),
     this.color,
     this.onTap,
     this.radius = AppSizes.cardRadius,
@@ -146,7 +146,7 @@ class _BouncyTapState extends State<_BouncyTap>
 
 /// 大号点击按钮（带缩放 + 触觉反馈）
 class BouncyButton extends StatefulWidget {
-  const BouncyButton({
+  BouncyButton({
     super.key,
     required this.child,
     required this.onPressed,
@@ -211,10 +211,12 @@ class _BouncyButtonState extends State<BouncyButton>
           alignment: Alignment.center,
           decoration: BoxDecoration(
             // v2：同色系渐变（替代 v1 的「主色→辅色」跨色渐变，避免蓝橙混色发灰）
+            // 注：三元两支类型必须一致；裸 null 无法参与类型推断，
+            // 故 ternary 两支均显式落在 Gradient 家族类型上。
             gradient: enabled
                 ? LinearGradient(
                     colors: widget.color != null
-                        ? [
+                        ? <Color>[
                             widget.color!,
                             Color.lerp(widget.color!, Colors.black, 0.16) ??
                                 widget.color!,
@@ -252,13 +254,13 @@ class _BouncyButtonState extends State<BouncyButton>
 
 /// 标题小标签（对应截图：任务卡上的「语文」「简单」标签）
 class TagChip extends StatelessWidget {
-  const TagChip({
+  TagChip({
     super.key,
     required this.text,
     this.color,
     this.textColor,
     this.fontSize = AppSizes.fontCaption,
-    this.padding = const EdgeInsets.symmetric(
+    this.padding = EdgeInsets.symmetric(
       horizontal: AppSizes.spaceMd,
       vertical: AppSizes.spaceXs,
     ),
@@ -313,20 +315,20 @@ class SubjectTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
+      padding: EdgeInsets.symmetric(
         horizontal: AppSizes.spaceLg,
         vertical: AppSizes.spaceSm,
       ),
       decoration: BoxDecoration(
         color: _color,
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           topLeft: Radius.circular(AppSizes.radiusMd),
           topRight: Radius.circular(AppSizes.radiusMd),
         ),
       ),
       child: Text(
         subject,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: AppSizes.fontLabel,
           fontWeight: FontWeight.w700,
           color: Colors.white,
@@ -362,7 +364,7 @@ class AppProgressBar extends StatelessWidget {
       children: [
         if (trailing != null) ...[
           trailing!,
-          const SizedBox(width: AppSizes.spaceSm),
+          SizedBox(width: AppSizes.spaceSm),
         ],
         Expanded(
           child: ClipRRect(
@@ -437,34 +439,34 @@ class EmptyPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppSizes.spaceXl),
+        padding: EdgeInsets.all(AppSizes.spaceXl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(emoji, style: const TextStyle(fontSize: 64)),
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
             Text(
               text,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontBody,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
               ),
             ),
             if (hint != null) ...[
-              const SizedBox(height: AppSizes.spaceSm),
+              SizedBox(height: AppSizes.spaceSm),
               Text(
                 hint!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontCaption,
                   color: AppColors.textHint,
                 ),
               ),
             ],
             if (action != null) ...[
-              const SizedBox(height: AppSizes.spaceXl),
+              SizedBox(height: AppSizes.spaceXl),
               action!,
             ],
           ],
