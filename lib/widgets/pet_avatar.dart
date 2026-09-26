@@ -17,7 +17,7 @@ class PetAvatar extends StatefulWidget {
   PetAvatar({
     super.key,
     required this.pet,
-    this.size = AppSizes.petHomeSize,
+    this.size,
     this.moodState = PetMoodState.normal,
     this.isJumping = false,
     this.isSpinning = false,
@@ -29,7 +29,14 @@ class PetAvatar extends StatefulWidget {
   final Pet? pet;
 
   /// 显示尺寸
-  final double size;
+  ///
+  /// v1.4.0：`AppSizes.petHomeSize` 已从 `static const` 改为动态 getter，
+  /// 不能再用作**默认参数值**（必须编译期常量），故此处默认 `null`，
+  /// 统一由 [_size] 兜底解析。
+  final double? size;
+
+  /// 解析后的实际显示尺寸
+  double get _size => size ?? AppSizes.petHomeSize;
 
   /// 情绪状态（影响表情与颜色）
   final PetMoodState moodState;
@@ -126,8 +133,8 @@ class _PetAvatarState extends State<PetAvatar>
     final modelPath = widget.pet?.species.modelPath;
     if (modelPath != null) {
       return SizedBox(
-        width: widget.size,
-        height: widget.size,
+        width: _size,
+        height: _size,
         // onTap 透传给 Pet3DViewer：3D 的点击由 WebView 内部判定后回传，
         // 不经过外层 GestureDetector（触摸被 model-viewer 消费了）。
         child: Pet3DViewer(modelPath: modelPath, onTap: widget.onTap),
@@ -181,8 +188,8 @@ class _PetAvatarState extends State<PetAvatar>
     return Opacity(
       opacity: (1 - progress).clamp(0.0, 1.0),
       child: Container(
-        width: widget.size * (1 + progress * 0.8),
-        height: widget.size * (1 + progress * 0.8),
+        width: _size * (1 + progress * 0.8),
+        height: _size * (1 + progress * 0.8),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(
@@ -203,7 +210,7 @@ class _PetAvatarState extends State<PetAvatar>
   /// 颜色由品种决定。这是**占位图形**，替换为真实插画时
   /// 只需把本方法改为 `Image.asset(pet.assetPath)`。
   Widget _buildPlaceholder(Color bodyColor) {
-    final s = widget.size;
+    final s = _size;
     final isSad = widget.moodState == PetMoodState.sad;
     final isHungry = widget.moodState == PetMoodState.hungry;
     final isSleepy = widget.moodState == PetMoodState.sleepy;
