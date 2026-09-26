@@ -141,28 +141,28 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceLg),
         child: Column(
           children: [
             // ---------- 宠物形象区 ----------
             _buildPetStage(live),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 状态数值 ----------
             _buildStatusCard(live),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 互动按钮 ----------
             _buildInteractionButtons(pet),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 能力解锁进度 ----------
             _buildAbilityCard(pet),
 
-            const SizedBox(height: AppSizes.spaceXxl),
+            SizedBox(height: AppSizes.spaceXxl),
           ],
         ),
       ),
@@ -173,7 +173,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
   Widget _buildPetStage(PetLiveState live) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceXl),
+      padding: EdgeInsets.symmetric(vertical: AppSizes.spaceXl),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: AppColors.skyGradient,
@@ -190,13 +190,13 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
             children: [
               Text(
                 live.pet.displayName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontTitle,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(width: AppSizes.spaceSm),
+              SizedBox(width: AppSizes.spaceSm),
               TagChip(
                 text: 'Lv.${live.pet.level}',
                 color: AppColors.secondary,
@@ -204,7 +204,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.spaceLg),
+          SizedBox(height: AppSizes.spaceLg),
 
           // 宠物形象（点击互动）
           GestureDetector(
@@ -224,18 +224,18 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
               onTap: () => _onPetTapped(live),
             ),
           ),
-          const SizedBox(height: AppSizes.spaceMd),
+          SizedBox(height: AppSizes.spaceMd),
 
           // 台词（点击后短暂切换为点击专用台词）
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 220),
             child: Padding(
               key: ValueKey(_tapDialogue ?? live.dialogue),
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceXl),
+              padding: EdgeInsets.symmetric(horizontal: AppSizes.spaceXl),
               child: Text(
                 _tapDialogue ?? live.dialogue,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontLabel,
                   color: AppColors.textSecondary,
                 ),
@@ -256,8 +256,8 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
           Row(
             children: [
               const Text('⭐', style: TextStyle(fontSize: 18)),
-              const SizedBox(width: AppSizes.spaceSm),
-              const Text(
+              SizedBox(width: AppSizes.spaceSm),
+              Text(
                 '经验',
                 style: TextStyle(
                   fontSize: AppSizes.fontLabel,
@@ -265,7 +265,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(width: AppSizes.spaceMd),
+              SizedBox(width: AppSizes.spaceMd),
               Expanded(
                 child: AppProgressBar(
                   value: live.expProgress,
@@ -273,10 +273,10 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                   height: 12,
                 ),
               ),
-              const SizedBox(width: AppSizes.spaceMd),
+              SizedBox(width: AppSizes.spaceMd),
               Text(
                 '${live.pet.exp}/${live.expToNext}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontCaption,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textSecondary,
@@ -284,7 +284,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.spaceLg),
+          SizedBox(height: AppSizes.spaceLg),
 
           // 饱食度
           _statusRow(
@@ -293,7 +293,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
             value: live.satiety,
             color: live.satiety < 30 ? AppColors.error : AppColors.success,
           ),
-          const SizedBox(height: AppSizes.spaceMd),
+          SizedBox(height: AppSizes.spaceMd),
 
           // 心情值
           _statusRow(
@@ -302,12 +302,12 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
             value: live.mood,
             color: live.mood < 30 ? AppColors.error : AppColors.secondary,
           ),
-          const SizedBox(height: AppSizes.spaceMd),
+          SizedBox(height: AppSizes.spaceMd),
 
           // 状态描述
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(
+            padding: EdgeInsets.symmetric(
               vertical: AppSizes.spaceSm,
             ),
             decoration: BoxDecoration(
@@ -317,7 +317,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
             child: Center(
               child: Text(
                 '当前状态：${live.moodState.emoji} ${live.moodState.label}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontLabel,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -339,12 +339,12 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
     return Row(
       children: [
         Text(emoji, style: const TextStyle(fontSize: 18)),
-        const SizedBox(width: AppSizes.spaceSm),
+        SizedBox(width: AppSizes.spaceSm),
         SizedBox(
           width: 64,
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: AppSizes.fontLabel,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
@@ -358,13 +358,13 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
             height: 12,
           ),
         ),
-        const SizedBox(width: AppSizes.spaceMd),
+        SizedBox(width: AppSizes.spaceMd),
         SizedBox(
           width: 36,
           child: Text(
             '$value',
             textAlign: TextAlign.right,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: AppSizes.fontLabel,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
@@ -388,7 +388,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
             onTap: () => _showFeedSheet(pet),
           ),
         ),
-        const SizedBox(width: AppSizes.spaceMd),
+        SizedBox(width: AppSizes.spaceMd),
 
         // 抚摸
         Expanded(
@@ -399,7 +399,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
             onTap: () => _caressPet(pet),
           ),
         ),
-        const SizedBox(width: AppSizes.spaceMd),
+        SizedBox(width: AppSizes.spaceMd),
 
         // 宠物商店
         Expanded(
@@ -427,7 +427,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
       child: Opacity(
         opacity: enabled ? 1.0 : 0.5,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceLg),
+          padding: EdgeInsets.symmetric(vertical: AppSizes.spaceLg),
           decoration: BoxDecoration(
             color: enabled ? AppColors.surface : AppColors.surfaceVariant,
             borderRadius: BorderRadius.circular(AppSizes.radiusMd),
@@ -442,7 +442,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                 enabled ? emoji : '🔒',
                 style: const TextStyle(fontSize: 28),
               ),
-              const SizedBox(height: AppSizes.spaceXs),
+              SizedBox(height: AppSizes.spaceXs),
               Text(
                 label,
                 style: TextStyle(
@@ -464,7 +464,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '解锁进度',
             style: TextStyle(
               fontSize: AppSizes.fontHeadline,
@@ -472,11 +472,11 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: AppSizes.spaceLg),
+          SizedBox(height: AppSizes.spaceLg),
           ...PetAbility.values.map((ability) {
             final unlocked = pet.hasAbility(ability);
             return Padding(
-              padding: const EdgeInsets.only(bottom: AppSizes.spaceMd),
+              padding: EdgeInsets.only(bottom: AppSizes.spaceMd),
               child: Row(
                 children: [
                   Container(
@@ -494,7 +494,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                       style: const TextStyle(fontSize: 16),
                     ),
                   ),
-                  const SizedBox(width: AppSizes.spaceMd),
+                  SizedBox(width: AppSizes.spaceMd),
                   Expanded(
                     child: Text(
                       ability.label,
@@ -542,8 +542,8 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        margin: const EdgeInsets.all(AppSizes.spaceLg),
-        padding: const EdgeInsets.all(AppSizes.spaceXl),
+        margin: EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceXl),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -551,7 +551,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               '选择食物',
               style: TextStyle(
                 fontSize: AppSizes.fontTitle,
@@ -559,7 +559,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             if (foods.isEmpty)
               const EmptyPlaceholder(
@@ -573,7 +573,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                   shrinkWrap: true,
                   itemCount: foods.length,
                   separatorBuilder: (_, __) =>
-                      const SizedBox(height: AppSizes.spaceSm),
+                      SizedBox(height: AppSizes.spaceSm),
                   itemBuilder: (_, i) {
                     final food = foods[i];
                     return GestureDetector(
@@ -582,7 +582,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                         await _feedPet(pet, food);
                       },
                       child: Container(
-                        padding: const EdgeInsets.all(AppSizes.spaceLg),
+                        padding: EdgeInsets.all(AppSizes.spaceLg),
                         decoration: BoxDecoration(
                           color: AppColors.surfaceVariant,
                           borderRadius:
@@ -592,11 +592,11 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                           children: [
                             Text(food.itemIcon,
                                 style: const TextStyle(fontSize: 30)),
-                            const SizedBox(width: AppSizes.spaceMd),
+                            SizedBox(width: AppSizes.spaceMd),
                             Expanded(
                               child: Text(
                                 food.itemName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: AppSizes.fontBody,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textPrimary,
@@ -652,8 +652,8 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        margin: const EdgeInsets.all(AppSizes.spaceLg),
-        padding: const EdgeInsets.all(AppSizes.spaceXl),
+        margin: EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceXl),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -661,7 +661,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               '切换宠物',
               style: TextStyle(
                 fontSize: AppSizes.fontTitle,
@@ -669,20 +669,20 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceXs),
-            const Text(
+            SizedBox(height: AppSizes.spaceXs),
+            Text(
               '每只宠物的等级、经验和皮肤都是独立的哦',
               style: TextStyle(
                 fontSize: AppSizes.fontCaption,
                 color: AppColors.textHint,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             ...pets.map((p) {
               final isActive = p.isBattle;
               return Padding(
-                padding: const EdgeInsets.only(bottom: AppSizes.spaceMd),
+                padding: EdgeInsets.only(bottom: AppSizes.spaceMd),
                 child: GestureDetector(
                   onTap: () async {
                     await ref
@@ -691,7 +691,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                     if (ctx.mounted) Navigator.pop(ctx);
                   },
                   child: Container(
-                    padding: const EdgeInsets.all(AppSizes.spaceMd),
+                    padding: EdgeInsets.all(AppSizes.spaceMd),
                     decoration: BoxDecoration(
                       color: isActive
                           ? AppColors.primary.withValues(alpha: 0.12)
@@ -704,14 +704,14 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                     child: Row(
                       children: [
                         PetAvatar(pet: p, size: 56),
-                        const SizedBox(width: AppSizes.spaceMd),
+                        SizedBox(width: AppSizes.spaceMd),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 p.displayName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: AppSizes.fontBody,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textPrimary,
@@ -719,7 +719,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                               ),
                               Text(
                                 'Lv.${p.level} · ${p.species.label}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: AppSizes.fontCaption,
                                   color: AppColors.textSecondary,
                                 ),
@@ -728,7 +728,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                           ),
                         ),
                         if (isActive)
-                          const TagChip(
+                          TagChip(
                             text: '出战中',
                             color: AppColors.success,
                             textColor: Colors.white,
@@ -755,8 +755,8 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        margin: const EdgeInsets.all(AppSizes.spaceLg),
-        padding: const EdgeInsets.all(AppSizes.spaceXl),
+        margin: EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceXl),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -764,7 +764,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               '领养新宠物',
               style: TextStyle(
                 fontSize: AppSizes.fontTitle,
@@ -772,11 +772,11 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 4,
                 mainAxisSpacing: AppSizes.spaceMd,
                 crossAxisSpacing: AppSizes.spaceMd,
@@ -806,10 +806,10 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
                         child: const Text('🐾',
                             style: TextStyle(fontSize: 26)),
                       ),
-                      const SizedBox(height: AppSizes.spaceXs),
+                      SizedBox(height: AppSizes.spaceXs),
                       Text(
                         species.label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: AppSizes.fontCaption,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -831,7 +831,7 @@ class _PetCenterPageState extends ConsumerState<PetCenterPage> {
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: AppSizes.fontBody,
             fontWeight: FontWeight.w600,
           ),
@@ -856,13 +856,13 @@ class _LevelUpDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       child: Padding(
-        padding: const EdgeInsets.all(AppSizes.spaceXl),
+        padding: EdgeInsets.all(AppSizes.spaceXl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text('✨', style: TextStyle(fontSize: 56)),
-            const SizedBox(height: AppSizes.spaceMd),
-            const Text(
+            SizedBox(height: AppSizes.spaceMd),
+            Text(
               '升级啦！',
               style: TextStyle(
                 fontSize: AppSizes.fontTitle,
@@ -870,9 +870,9 @@ class _LevelUpDialog extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceMd),
+            SizedBox(height: AppSizes.spaceMd),
             Container(
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                 horizontal: AppSizes.spaceXl,
                 vertical: AppSizes.spaceSm,
               ),
@@ -884,28 +884,28 @@ class _LevelUpDialog extends StatelessWidget {
               ),
               child: Text(
                 'Lv.$newLevel',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontTitle,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                 ),
               ),
             ),
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // 新解锁能力提示
             ...PetAbility.values
                 .where((a) => a.unlockLevel == newLevel)
                 .map((a) => Text(
                       '🎉 解锁新能力：${a.label}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontBody,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primaryDark,
                       ),
                     )),
 
-            const SizedBox(height: AppSizes.spaceXl),
+            SizedBox(height: AppSizes.spaceXl),
             BouncyButton(
               onPressed: () => Navigator.pop(context),
               width: 180,
