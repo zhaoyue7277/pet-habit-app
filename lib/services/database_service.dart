@@ -344,24 +344,35 @@ class DatabaseService {
       habits.values.cast<Habit>().where((h) => h.childId == childId && !h.isArchived).toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
-  /// 按日期获取当天已打卡的习惯 ID 集合
+  /// 按日期获取当天**已完成**（已验收通过）的习惯 ID 集合
+  ///
+  /// v1.4.0 起语义收紧：以前只要写了记录就算「已打卡」，现在必须
+  /// 家长验收通过才算。待验收 / 已驳回都不算完成，否则孩子点一下
+  /// UI 就会显示「已完成」，失去了延迟确认的意义。
   Set<String> getCheckedHabitIdsOn(String childId, DateTime day) {
     final key = HabitCheckIn.keyOf(day);
     return checkIns.values
         .cast<HabitCheckIn>()
-        .where((c) => c.childId == childId && c.dateKey == key)
+        .where((c) =>
+            c.childId == childId && c.dateKey == key && c.countsAsDone)
         .map((c) => c.habitId)
         .toSet();
   }
 
   /// 获取某习惯最近 n 天的打卡情况（用于 7 格周视图）
+  ///
+  /// 只统计「已通过」，待验收的格子留空并在 UI 上另标「待验收」。
   List<bool> getHabitWeekStatus(String habitId, String childId, {int days = 7}) {
     final now = DateTime.now();
     return List.generate(days, (i) {
       final day = now.subtract(Duration(days: days - 1 - i));
       final key = HabitCheckIn.keyOf(day);
       return checkIns.values.cast<HabitCheckIn>().any(
-            (c) => c.habitId == habitId && c.childId == childId && c.dateKey == key,
+            (c) =>
+                c.habitId == habitId &&
+                c.childId == childId &&
+                c.dateKey == key &&
+                c.countsAsDone,
           );
     });
   }
@@ -370,8 +381,45 @@ class DatabaseService {
   DateTime? getHabitCheckInTime(String habitId, String childId, DateTime day) {
     final key = HabitCheckIn.keyOf(day);
     for (final c in checkIns.values.cast<HabitCheckIn>()) {
-      if (c.habitId == habitId && c.childId == childId && c.dateKey == key) {
+      if (c.habitId == habitId &&
+          c.childId == childId &&
+          c.dateKey == key &&
+          c.countsAsDone) {
         return c.checkInTime;
+      }
+    }
+    return null;
+  }
+
+  // ==================== v1.4.0 三态验收查询 ====================
+
+  /// 某孩子全部「待验收」记录（最新在前）—— 家长验收队列的数据源
+  List<HabitCheckIn> getPendingCheckIns(String childId) {
+    final list = checkIns.values
+        .cast<HabitCheckIn>()
+        .where((c) => c.childId == childId && c.isPending)
+        .toList()
+      ..sort((a, b) => b.checkInTime.compareTo(a.checkInTime));
+    return list;
+  }
+
+  /// 待验收数量（用于首页红点 / 角标）
+  int getPendingCheckInCount(String childId) =>
+      checkIns.values
+          .cast<HabitCheckIn>()
+          .where((c) => c.childId == childId && c.isPending)
+          .length;
+
+  /// 某天某习惯的打卡记录（含待验收 / 已驳回，用于判断是否可再次提交）
+  HabitCheckIn? getCheckInRecord(
+    String habitId,
+    String childId,
+    DateTime day,
+  ) {
+    final key = HabitCheckIn.keyOf(day);
+    for (final c in checkIns.values.cast<HabitCheckIn>()) {
+      if (c.habitId == habitId && c.childId == childId && c.dateKey == key) {
+        return c;
       }
     }
     return null;
@@ -384,73 +432,178 @@ class DatabaseService {
     await _deleteWhere(checkIns, (HabitCheckIn e) => e.habitId == habitId);
   }
 
-  /// 习惯打卡
+  /// 习惯打卡（v1.4.0：改为「延迟确认」）
   ///
-  /// 返回本次发放的奖励数值（0 表示未发放，例如今日已打满次数）。
-  /// 同时处理连击天数计算与连击目标奖励发放。
+  /// **行为变化**
+  ///
+  /// | 版本 | 行为 |
+  /// |---|---|
+  /// | v1.3- | 点一下 → 立即发奖励、连击 +1、UI 显示已完成 |
+  /// | v1.4+ | 点一下 → 写入「待验收」记录、**不发奖励**、连击不动 |
+  ///
+  /// 奖励与连击要等到 [approveCheckIn] 才真正落账。
+  ///
+  /// **返回值**：本次实际发放的奖励数值。延迟确认下恒为 `0`
+  /// （除非命中「当天重复提交覆盖」的情形，也仍是 0）。
+  ///
+  /// **覆盖规则**：若当天已有记录且状态为「待验收」或「已驳回」，
+  /// 直接覆盖为新记录（孩子补做后重新提交），不会产生多条。
+  /// 若当天已有「已通过」记录，则视为重复打卡，直接返回 0。
   Future<int> checkInHabit(Habit habit, {DateTime? at}) async {
     final now = at ?? DateTime.now();
     final dateKey = HabitCheckIn.keyOf(now);
 
-    // 今日已打卡次数
-    final todayCount = checkIns.values.cast<HabitCheckIn>().where(
+    final records = checkIns.values.cast<HabitCheckIn>().where(
           (c) => c.habitId == habit.id && c.dateKey == dateKey,
-        ).length;
-    if (todayCount >= habit.dailyTargetCount) return 0;
+        ).toList();
 
-    // 写入打卡记录
+    // 已通过 → 不能重复提交
+    if (records.any((c) => c.isApproved)) return 0;
+
+    // 达到每日目标次数（仅统计已通过的，用于放行补交）
+    final approvedCount = records.where((c) => c.countsAsDone).length;
+    if (approvedCount >= habit.dailyTargetCount) return 0;
+
+    // 覆盖掉旧的待验收 / 已驳回记录（补交通道）
+    for (final old in records) {
+      await checkIns.delete(old.id);
+    }
+
     final record = HabitCheckIn(
       id: newId('ci_'),
       childId: habit.childId,
       habitId: habit.id,
       checkInTime: now,
       dateKey: dateKey,
+      verifyStatusRaw: HabitVerifyStatus.pending.index,
     );
     await checkIns.put(record.id, record);
 
-    // ---------- 连击天数计算 ----------
-    var streak = habit.currentStreakDays;
-    final last = habit.lastCheckInTime;
-    if (last == null) {
-      streak = 1;
-    } else {
-      final lastDay = DateTime(last.year, last.month, last.day);
-      final today = DateTime(now.year, now.month, now.day);
-      final diff = today.difference(lastDay).inDays;
-      if (diff == 0) {
-        // 当天再次打卡，连击不变
-      } else if (diff == 1) {
-        streak += 1;
-      } else {
-        // 断连，重新计数
+    // ⚠️ 这里**不发奖励、不改连击** —— 交给 approveCheckIn()。
+    return 0;
+  }
+
+  /// 家长确认打卡（发放奖励 + 结算连击）
+  ///
+  /// 幂等：对已 approved 且 [HabitCheckIn.rewardGiven] 为 true 的记录
+  /// 重复调用不会再发币。
+  ///
+  /// 返回本次实际发放的奖励总额（0 表示没发 / 已发过）。
+  Future<int> approveCheckIn(String checkInId, {DateTime? at}) async {
+    final now = at ?? DateTime.now();
+    final record = checkIns.get(checkInId) as HabitCheckIn?;
+    if (record == null) return 0;
+    if (record.isApproved && record.rewardGiven) return 0;
+
+    final habit = habits.get(record.habitId) as Habit?;
+    if (habit == null) return 0;
+
+    var reward = 0;
+
+    // ---------- 只在第一次通过时结算连击与奖励 ----------
+    if (!record.rewardGiven) {
+      // 连击天数：以打卡当天为准（补验收时也要正确计算）
+      var streak = habit.currentStreakDays;
+      final last = habit.lastCheckInTime;
+      if (last == null) {
         streak = 1;
+      } else {
+        final lastDay = DateTime(last.year, last.month, last.day);
+        final thisDay = DateTime(
+          record.checkInTime.year,
+          record.checkInTime.month,
+          record.checkInTime.day,
+        );
+        final diff = thisDay.difference(lastDay).inDays;
+        if (diff == 0) {
+          // 同日重复通过（如补交），连击不变
+        } else if (diff == 1) {
+          streak += 1;
+        } else {
+          streak = 1;
+        }
+      }
+
+      var updated = habit.copyWith(
+        currentStreakDays: streak,
+        bestStreakDays:
+            streak > habit.bestStreakDays ? streak : habit.bestStreakDays,
+        lastCheckInTime: record.checkInTime,
+      );
+      await habits.put(updated.id, updated);
+
+      // 日常打卡奖励
+      if (habit.checkInRewardValue > 0 &&
+          habit.checkInRewardType != RewardType.custom) {
+        await changeCoin(
+          habit.childId,
+          habit.checkInRewardType,
+          habit.checkInRewardValue,
+        );
+        reward += habit.checkInRewardValue;
+      }
+
+      // 连击目标奖励
+      if (updated.canClaimStreakReward &&
+          updated.targetRewardType != RewardType.custom) {
+        await changeCoin(
+          updated.childId,
+          updated.targetRewardType,
+          updated.targetRewardValue,
+        );
+        updated = updated.copyWith(lastStreakRewardAt: now);
+        await habits.put(updated.id, updated);
+        reward += updated.targetRewardValue;
       }
     }
 
-    var updated = habit.copyWith(
-      currentStreakDays: streak,
-      bestStreakDays: streak > habit.bestStreakDays ? streak : habit.bestStreakDays,
-      lastCheckInTime: now,
+    await checkIns.put(
+      record.id,
+      record.copyWith(
+        verifyStatusValue: HabitVerifyStatus.approved,
+        verifiedAt: now,
+        rewardGiven: true,
+        clearRejectReason: true,
+      ),
     );
-    await habits.put(updated.id, updated);
 
-    // 发放日常打卡奖励
-    var reward = 0;
-    if (habit.checkInRewardValue > 0 &&
-        habit.checkInRewardType != RewardType.custom) {
-      await changeCoin(habit.childId, habit.checkInRewardType, habit.checkInRewardValue);
-      reward = habit.checkInRewardValue;
-    }
-
-    // 连击目标奖励
-    if (updated.canClaimStreakReward && updated.targetRewardType != RewardType.custom) {
-      await changeCoin(updated.childId, updated.targetRewardType, updated.targetRewardValue);
-      updated = updated.copyWith(lastStreakRewardAt: now);
-      await habits.put(updated.id, updated);
-      reward += updated.targetRewardValue;
-    }
-
+    await refreshAchievements(habit.childId);
     return reward;
+  }
+
+  /// 家长驳回打卡（可附原因）
+  ///
+  /// **不发奖励、不动连击**；记录保留为 rejected，孩子可补交
+  /// （补交会覆盖这条记录，见 [checkInHabit] 的覆盖规则）。
+  Future<void> rejectCheckIn(
+    String checkInId, {
+    String? reason,
+    DateTime? at,
+  }) async {
+    final record = checkIns.get(checkInId) as HabitCheckIn?;
+    if (record == null) return;
+    // 已经发过奖励的记录不允许驳回（否则要回收货币，逻辑太绕且易出错）
+    if (record.rewardGiven) return;
+
+    await checkIns.put(
+      record.id,
+      record.copyWith(
+        verifyStatusValue: HabitVerifyStatus.rejected,
+        verifiedAt: at ?? DateTime.now(),
+        rejectReason: reason,
+      ),
+    );
+  }
+
+  /// 批量确认（家长一次点「全部通过」）
+  ///
+  /// 返回本次发放的奖励总额。
+  Future<int> approveAllPending(String childId, {DateTime? at}) async {
+    var total = 0;
+    for (final r in getPendingCheckIns(childId)) {
+      total += await approveCheckIn(r.id, at: at);
+    }
+    return total;
   }
 
   // ==================== 兑换 ====================
@@ -803,6 +956,13 @@ class DatabaseService {
     if (!s.hasSetPin) return false;
     return hashPin(pin, s.parentPinSalt) == s.parentPinHash;
   }
+
+  /// 是否已设置家长密码
+  ///
+  /// 用途：决定「进入家长功能区」是否需要弹密码。
+  /// 首次使用（从未设置过）时应直接放行，避免新手家长被自己的
+  /// 逻辑锁在门外。
+  bool hasParentPin() => getSettings().hasSetPin;
 
   // ==================== 种子数据 ====================
 
@@ -1179,6 +1339,35 @@ class DatabaseService {
       PetDialogue(id: 'dl_tap_sad', text: '陪我玩一会儿好不好嘛～',
           triggerType: PetDialogueTrigger.tapPet,
           moodState: PetMoodState.sad, priority: 80),
+      // ===== v1.4.0 打卡验收三态（延迟确认机制的情绪配套）=====
+      //
+      // 【语气设计的分寸感】
+      //   · 待验收 → 陪伴感（「我陪你一起等」），而不是让孩子焦虑；
+      //   · 已通过 → 庆祝感（要高调，这是奖励的一部分）；
+      //   · 已驳回 → **安慰，绝不责备**。孩子这时已经沮丧了，
+      //     宠物的角色是「站在他这边」，而不是当家长的传声筒。
+      PetDialogue(id: 'dl_ci_pending_1', text: '打卡提交成功！我陪你一起等爸爸妈妈～',
+          triggerType: PetDialogueTrigger.checkInPending, priority: 70),
+      PetDialogue(id: 'dl_ci_pending_2', text: '已经告诉爸爸妈妈啦，他们确认后就发奖励哦～',
+          triggerType: PetDialogueTrigger.checkInPending, priority: 70),
+      PetDialogue(id: 'dl_ci_pending_3', text: '先记下来啦！我们一起等好消息～',
+          triggerType: PetDialogueTrigger.checkInPending, priority: 68),
+      PetDialogue(id: 'dl_ci_ok_1', text: '通过啦！奖励到手，太棒了！',
+          triggerType: PetDialogueTrigger.checkInApproved, priority: 90),
+      PetDialogue(id: 'dl_ci_ok_2', text: '爸爸妈妈确认啦，我就知道你可以！',
+          triggerType: PetDialogueTrigger.checkInApproved, priority: 90),
+      PetDialogue(id: 'dl_ci_ok_3', text: '叮～奖励到账！我们继续加油～',
+          triggerType: PetDialogueTrigger.checkInApproved, priority: 88),
+      PetDialogue(id: 'dl_ci_rej_1', text: '没关系的，抱抱你～我们再来一次就好啦',
+          triggerType: PetDialogueTrigger.checkInRejected, priority: 95),
+      PetDialogue(id: 'dl_ci_rej_2', text: '别难过哦，你已经很努力了，我一直看着呢',
+          triggerType: PetDialogueTrigger.checkInRejected, priority: 95),
+      PetDialogue(id: 'dl_ci_rej_3', text: '一次不算什么～补做一遍，我陪你一起！',
+          triggerType: PetDialogueTrigger.checkInRejected, priority: 92),
+      PetDialogue(id: 'dl_rec_void_1', text: '咦？好像没听到你的声音呢，再来一次吧～',
+          triggerType: PetDialogueTrigger.recordingVoided, priority: 85),
+      PetDialogue(id: 'dl_rec_void_2', text: '这次不算哦～大声读出来我才能听见呀',
+          triggerType: PetDialogueTrigger.recordingVoided, priority: 85),
     ];
     for (final d in list) {
       await petDialogues.put(d.id, d);
