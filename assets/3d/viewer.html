@@ -18,6 +18,33 @@
     --progress-mask: transparent;
   }
 </style>
+<!--
+  ⚠️⚠️ 顺序至关重要，这段必须放在 model-viewer.min.js 之前 ⚠️⚠️
+
+  【为什么】pet_*.glb 用了 KHR_draco_mesh_compression（写在 extensionsRequired
+  里，是硬性要求）。model-viewer 的 Draco 解码器**不内嵌**在自己的 bundle 中，
+  而是「检测到该扩展 → 立刻按需下载解码器」。
+
+  默认下载地址是 Google CDN：
+      https://www.gstatic.com/draco/versioned/decoders/1.5.6/
+  而本 App：
+    1. 国内网络访问 gstatic.com 基本不通；
+    2. Android 端 WebViewAssetLoader 走 https 虚拟域名，release 包还没有
+       INTERNET 权限；
+  → 解码器取不到 → glb 永远解码失败 → 界面无限转圈（真机现象根源）。
+
+  改为指向随包分发的本地解码器 ./draco/（同目录 assets/3d/draco/），
+  全程离线，零外部请求。
+
+  dracoDecoderLocation 是 model-viewer 的**静态属性**，
+  必须在自定义元素被定义（即 min.js 执行）之前设置，之后再设无效。
+-->
+<script>
+  self.ModelViewerElement = self.ModelViewerElement || {};
+  self.ModelViewerElement.dracoDecoderLocation = './draco/';
+  // 预留：若将来改用 KTX2/Basis 纹理压缩，同样需要自托管转码器
+  self.ModelViewerElement.ktx2TranscoderLocation = './draco/';
+</script>
 <script src="./model-viewer.min.js" type="module"></script>
 </head>
 <body>
@@ -42,15 +69,39 @@
   }
 
   var mv = document.getElementById('mv');
+  var _loaded = false;
 
   // 模型真正解码完成 → 通知 Flutter 结束 loading
-  mv.addEventListener('load', function () { report('loaded'); });
+  mv.addEventListener('load', function () {
+    _loaded = true;
+    report('loaded');
+  });
 
   // 解码失败 → 通知 Flutter 展示失败态
+  // detail 里带上具体原因（loadfailure / 网络 / 解码），便于真机排查
   mv.addEventListener('error', function (e) {
     var type = (e && e.detail && e.detail.type) || 'unknown';
-    report('error', type);
+    var msg = (e && e.detail && e.detail.message) || '';
+    report('error', msg ? (type + ': ' + msg) : type);
   });
+
+  // 自检：确认本地 Draco 解码器确实随包分发且在可达位置。
+  // 若这一步失败，说明 assets/3d/draco/ 没打进包或路径不对，
+  // 模型必然解码失败 —— 提前上报，避免用户干等到超时。
+  (function preflight() {
+    try {
+      var probe = new XMLHttpRequest();
+      probe.open('HEAD', './draco/draco_decoder.wasm', true);
+      probe.onreadystatechange = function () {
+        if (probe.readyState !== 4) return;
+        if (probe.status === 0 || probe.status >= 400) {
+          report('error', 'draco-missing(HTTP ' + probe.status + ')');
+        }
+      };
+      probe.onerror = function () { report('error', 'draco-missing(net)'); };
+      probe.send();
+    } catch (e) { /* 探测失败不阻断主流程 */ }
+  })();
 
   // Flutter 调用：设置模型路径（支持重复调用）
   window.setPetModel = function (src) {
@@ -61,7 +112,7 @@
 
   // 兜底：若 15s 内既没 load 也没 error，上报超时
   var guard = setTimeout(function () {
-    if (!mv.loaded) report('error', 'timeout-watchdog');
+    if (!_loaded) report('error', 'timeout-watchdog');
   }, 15000);
   mv.addEventListener('load', function () { clearTimeout(guard); });
 </script>
