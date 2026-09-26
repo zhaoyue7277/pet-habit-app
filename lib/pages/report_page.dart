@@ -58,7 +58,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
+            padding: EdgeInsets.symmetric(
               horizontal: AppSizes.spaceLg,
               vertical: AppSizes.spaceSm,
             ),
@@ -76,7 +76,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                       onTap: () => setState(() => _period = p),
                       child: AnimatedContainer(
                         duration: AppSizes.durationFast,
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           vertical: AppSizes.spaceSm,
                         ),
                         alignment: Alignment.center,
@@ -107,23 +107,23 @@ class _ReportPageState extends ConsumerState<ReportPage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.spaceLg),
+        padding: EdgeInsets.all(AppSizes.spaceLg),
         child: Column(
           children: [
             // ---------- 核心指标卡 ----------
             _buildMetricGrid(data),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 学习时长柱状图 ----------
             _buildDurationChart(data),
 
-            const SizedBox(height: AppSizes.spaceLg),
+            SizedBox(height: AppSizes.spaceLg),
 
             // ---------- 科目均衡度饼图 ----------
             _buildSubjectPie(data),
 
-            const SizedBox(height: AppSizes.spaceXxl),
+            SizedBox(height: AppSizes.spaceXxl),
           ],
         ),
       ),
@@ -145,7 +145,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                 color: AppColors.primary,
               ),
             ),
-            const SizedBox(width: AppSizes.spaceMd),
+            SizedBox(width: AppSizes.spaceMd),
             Expanded(
               child: _metricCard(
                 emoji: '✅',
@@ -157,7 +157,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
             ),
           ],
         ),
-        const SizedBox(height: AppSizes.spaceMd),
+        SizedBox(height: AppSizes.spaceMd),
         Row(
           children: [
             Expanded(
@@ -169,7 +169,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                 color: AppColors.secondary,
               ),
             ),
-            const SizedBox(width: AppSizes.spaceMd),
+            SizedBox(width: AppSizes.spaceMd),
             Expanded(
               child: _metricCard(
                 emoji: '🎯',
@@ -193,7 +193,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
     required Color color,
   }) {
     return AppCard(
-      padding: const EdgeInsets.all(AppSizes.spaceLg),
+      padding: EdgeInsets.all(AppSizes.spaceLg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -209,11 +209,11 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                 ),
                 child: Text(emoji, style: const TextStyle(fontSize: 16)),
               ),
-              const SizedBox(width: AppSizes.spaceSm),
+              SizedBox(width: AppSizes.spaceSm),
               Flexible(
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSizes.fontCaption,
                     color: AppColors.textSecondary,
                   ),
@@ -221,7 +221,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.spaceMd),
+          SizedBox(height: AppSizes.spaceMd),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -234,10 +234,10 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                   color: color,
                 ),
               ),
-              const SizedBox(width: AppSizes.spaceXs),
+              SizedBox(width: AppSizes.spaceXs),
               Text(
                 unit,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontCaption,
                   color: AppColors.textHint,
                 ),
@@ -260,7 +260,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '学习时长趋势',
             style: TextStyle(
               fontSize: AppSizes.fontHeadline,
@@ -268,7 +268,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: AppSizes.spaceLg),
+          SizedBox(height: AppSizes.spaceLg),
 
           SizedBox(
             height: 180,
@@ -288,7 +288,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                           getTooltipItem: (group, groupIndex, rod, rodIndex) {
                             return BarTooltipItem(
                               '${rod.toY.round()} 分钟',
-                              const TextStyle(
+                              TextStyle(
                                 color: Colors.white,
                                 fontSize: AppSizes.fontCaption,
                                 fontWeight: FontWeight.w700,
@@ -311,7 +311,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                             interval: maxY / 3,
                             getTitlesWidget: (value, meta) => Text(
                               value.round().toString(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: AppSizes.fontTiny,
                                 color: AppColors.textHint,
                               ),
@@ -327,12 +327,12 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                                 return const SizedBox.shrink();
                               }
                               return Padding(
-                                padding: const EdgeInsets.only(
+                                padding: EdgeInsets.only(
                                   top: AppSizes.spaceSm,
                                 ),
                                 child: Text(
                                   data.dayLabels[i],
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: AppSizes.fontTiny,
                                     color: AppColors.textSecondary,
                                   ),
@@ -382,7 +382,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
   /// 科目均衡度饼图
   Widget _buildSubjectPie(_ReportData data) {
     if (data.subjectMinutes.isEmpty) {
-      return const AppCard(
+      return AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -418,7 +418,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '科目均衡度',
             style: TextStyle(
               fontSize: AppSizes.fontHeadline,
@@ -426,7 +426,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: AppSizes.spaceLg),
+          SizedBox(height: AppSizes.spaceLg),
 
           Row(
             children: [
@@ -459,7 +459,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: AppSizes.spaceLg),
+              SizedBox(width: AppSizes.spaceLg),
 
               // 图例
               Expanded(
@@ -467,7 +467,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: List.generate(entries.length, (i) {
                     return Padding(
-                      padding: const EdgeInsets.only(
+                      padding: EdgeInsets.only(
                         bottom: AppSizes.spaceSm,
                       ),
                       child: Row(
@@ -480,11 +480,11 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                               borderRadius: BorderRadius.circular(3),
                             ),
                           ),
-                          const SizedBox(width: AppSizes.spaceSm),
+                          SizedBox(width: AppSizes.spaceSm),
                           Expanded(
                             child: Text(
                               entries[i].key,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: AppSizes.fontCaption,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
@@ -493,7 +493,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
                           ),
                           Text(
                             '${entries[i].value}分',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: AppSizes.fontCaption,
                               color: AppColors.textSecondary,
                             ),
@@ -507,12 +507,12 @@ class _ReportPageState extends ConsumerState<ReportPage> {
             ],
           ),
 
-          const SizedBox(height: AppSizes.spaceMd),
+          SizedBox(height: AppSizes.spaceMd),
 
           // 均衡度提示
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(AppSizes.spaceMd),
+            padding: EdgeInsets.all(AppSizes.spaceMd),
             decoration: BoxDecoration(
               color: AppColors.info.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AppSizes.radiusMd),
@@ -521,7 +521,7 @@ class _ReportPageState extends ConsumerState<ReportPage> {
               data.balanceScore >= 0.7
                   ? '👍 各科目分布很均衡，继续保持！'
                   : '💡 科目之间有点偏科，注意均衡安排哦',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontCaption,
                 color: AppColors.textSecondary,
               ),
