@@ -132,6 +132,24 @@ class PetDialogueTrigger {
   /// [tapPet] 是「用户主动点击宠物后说的话」—— 后者应该更短、更有回应感
   /// （如「哎呀，你戳我干嘛～」），避免每次都念同一套闲时台词。
   static const String tapPet = 'tap_pet';
+
+  // ==================== v1.4.0：打卡验收相关 ====================
+
+  /// 提交打卡、等家长验收时（宠物表达「我陪你一起等」）
+  static const String checkInPending = 'check_in_pending';
+
+  /// 家长确认通过（宠物欢呼庆祝）
+  static const String checkInApproved = 'check_in_approved';
+
+  /// 家长驳回（宠物安慰，**不责备**）
+  ///
+  /// 这是「情绪价值」最关键的场景：孩子被驳回本来就沮丧，
+  /// 宠物这时应该是「抱抱你」「我们一起再来一次」，
+  /// 绝不能是「你怎么又没做好」——那会让孩子把 App 和挫败感绑定。
+  static const String checkInRejected = 'check_in_rejected';
+
+  /// 录音防作弊被拦下（如静音、中途切出）
+  static const String recordingVoided = 'recording_voided';
 }
 
 /// 家长备注 / 打卡日记表（多孩隔离：通过 [childId] 关联 Child）
