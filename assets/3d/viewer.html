@@ -48,14 +48,39 @@
 <script src="./model-viewer.min.js" type="module"></script>
 </head>
 <body>
+<!--
+  【v1.3.0】相机改为「纯水平旋转」
+
+  model-viewer 的相机用极坐标描述，camera-orbit 的格式是 `$theta $phi $radius`：
+    - theta = 方位角（水平方向，绕 Y 轴）
+    - phi   = 极角（**从模型正上方往下量**，所以 90deg 才是水平正视，
+              0deg 在头顶、180deg 在脚底）
+
+  需求是「能看正面/侧面/背面，不能看头顶和脚底」，等价于：
+    theta 完全放开 + phi 锁死
+
+  所以用 min/max-camera-orbit 把 phi 的上下限都钉在 90deg：
+    纵向被钳制 → 无论怎么拖都不能俯视/仰视
+    水平方向 ±Infinity → 正面/侧面/背面自由转
+
+  ⚠️ 注意 disable-zoom（禁用缩放）**不能**禁用旋转，解决不了这个问题，
+     必须用 min/max-camera-orbit。
+
+  若将来觉得完全锁死显得「僵」，可把 phi 放宽为 75deg~105deg
+  （保留极轻微的可动范围，观感更自然，但依然看不到头顶/脚底）。
+-->
 <model-viewer
   id="mv"
   auto-rotate
   camera-controls
   disable-pan
+  camera-orbit="0deg 90deg auto"
+  min-camera-orbit="-Infinity 90deg auto"
+  max-camera-orbit="Infinity 90deg auto"
+  interaction-prompt="none"
   shadow-intensity="1"
   exposure="1"
-  rotation-per-second="30deg">
+  rotation-per-second="18deg">
 </model-viewer>
 <script>
   // 与 Flutter 通信：上报模型真实加载状态。
@@ -109,6 +134,64 @@
     if (!mv) { report('error', 'no-viewer'); return; }
     mv.setAttribute('src', src);
   };
+
+  // ==================== v1.3.0：点击交互 ====================
+  //
+  // 【为什么要自己判定「点击」】
+  // camera-controls 开启后，model-viewer 会接管触摸事件用于拖拽旋转，
+  // 普通的 click 事件不可靠（拖完一圈松手也可能被识别为 click）。
+  // 若直接把 click 上报给 Flutter，会出现「用户只是转个模型，
+  // 宠物却一直说话」的干扰。
+  //
+  // 【判定规则】按「位移 + 时长」双阈值，两者都小才算点击：
+  //   - 手指移动 < 10px（防止拖拽旋转误判）
+  //   - 按下到抬起 < 300ms（防止长按误判）
+  // 这是移动端区分 tap 与 drag 的标准做法。
+  //
+  // 【为什么监听在 document 而不是 model-viewer】
+  // model-viewer 内部有 Shadow DOM，事件可能被内部元素吞掉；
+  // 监听 document 捕获阶段更可靠。同时用 closest 判断点击目标
+  // 是否落在 model-viewer 区域内。
+  (function initTapDetection() {
+    var TAP_MOVE_TOLERANCE = 10;   // px
+    var TAP_TIME_LIMIT = 300;      // ms
+
+    var startX = 0, startY = 0, startTime = 0, tracking = false;
+
+    function inViewer(target) {
+      if (!target || !target.closest) return false;
+      return !!target.closest('model-viewer');
+    }
+
+    document.addEventListener('pointerdown', function (e) {
+      if (!inViewer(e.target)) return;
+      tracking = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startTime = Date.now();
+    }, true);
+
+    document.addEventListener('pointerup', function (e) {
+      if (!tracking) return;
+      tracking = false;
+      if (!inViewer(e.target)) return;
+
+      var dx = Math.abs(e.clientX - startX);
+      var dy = Math.abs(e.clientY - startY);
+      var dt = Date.now() - startTime;
+
+      // 位移或时长任一超限 → 判定为拖拽/长按，不上报
+      if (dx > TAP_MOVE_TOLERANCE || dy > TAP_MOVE_TOLERANCE) return;
+      if (dt > TAP_TIME_LIMIT) return;
+
+      report('tapped');
+    }, true);
+
+    // 拖拽开始/取消时清掉追踪状态，避免残留导致误判
+    document.addEventListener('pointercancel', function () {
+      tracking = false;
+    }, true);
+  })();
 
   // 兜底：若 15s 内既没 load 也没 error，上报超时
   var guard = setTimeout(function () {
