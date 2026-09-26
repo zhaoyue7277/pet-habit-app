@@ -49,7 +49,7 @@ class HomeGreetingBar extends ConsumerWidget {
     final greeting = greetingOf(DateTime.now());
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
+      padding: EdgeInsets.symmetric(
         horizontal: AppSizes.spaceLg,
         vertical: AppSizes.spaceMd,
       ),
@@ -67,15 +67,15 @@ class HomeGreetingBar extends ConsumerWidget {
                       '$greeting，${child?.name ?? '小朋友'}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontTitle,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
                     ),
                   ),
-                  const SizedBox(width: AppSizes.spaceSm),
-                  const Icon(
+                  SizedBox(width: AppSizes.spaceSm),
+                  Icon(
                     Icons.keyboard_arrow_down_rounded,
                     color: AppColors.textSecondary,
                     size: AppSizes.iconMd,
@@ -90,7 +90,7 @@ class HomeGreetingBar extends ConsumerWidget {
             icon: Icons.calendar_month_rounded,
             onTap: onCalendarTap,
           ),
-          const SizedBox(width: AppSizes.spaceMd),
+          SizedBox(width: AppSizes.spaceMd),
 
           // ---------- 宠物图标（跳宠物中心） ----------
           _IconButton(
@@ -153,11 +153,11 @@ class WeekDateBar extends ConsumerWidget {
     return SizedBox(
       height: 72,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
+        padding: EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
         child: Row(
           children: [
             for (int index = 0; index < 7; index++) ...[
-              if (index > 0) const SizedBox(width: AppSizes.spaceSm - 2),
+              if (index > 0) SizedBox(width: AppSizes.spaceSm - 2),
               Expanded(
                 child: Builder(builder: (context) {
                   final day = monday.add(Duration(days: index));
@@ -209,7 +209,7 @@ class _DateCell extends StatelessWidget {
             color: isToday ? AppColors.primaryDark : AppColors.textSecondary,
           ),
         ),
-        const SizedBox(height: AppSizes.spaceXs),
+        SizedBox(height: AppSizes.spaceXs),
         // **响应式**：日期块撑满 Expanded 给的宽度（不再固定 48），
         // 高度固定 46 保持视觉一致。
         AspectRatio(
@@ -232,7 +232,7 @@ class _DateCell extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: AppSizes.spaceXs),
+        SizedBox(height: AppSizes.spaceXs),
         // 活动标记小圆点
         Container(
           width: 5,
@@ -262,7 +262,7 @@ class TodayStatsCard extends ConsumerWidget {
     const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
 
     return Container(
-      padding: const EdgeInsets.all(AppSizes.spaceMd),
+      padding: EdgeInsets.all(AppSizes.spaceMd),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
@@ -274,7 +274,7 @@ class TodayStatsCard extends ConsumerWidget {
         children: [
           // ---------- 日期标题栏（主色底） ----------
           Container(
-            padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceSm),
+            padding: EdgeInsets.symmetric(vertical: AppSizes.spaceSm),
             decoration: BoxDecoration(
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(AppSizes.radiusSm),
@@ -285,7 +285,7 @@ class TodayStatsCard extends ConsumerWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontLabel,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
@@ -293,19 +293,19 @@ class TodayStatsCard extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: AppSizes.spaceMd),
+          SizedBox(height: AppSizes.spaceMd),
 
           // ---------- 学习时长 ----------
           _statLine(
             '学习总时长：',
             '${stats.studiedMinutes} 分钟',
           ),
-          const SizedBox(height: AppSizes.spaceXs),
+          SizedBox(height: AppSizes.spaceXs),
           _statLine(
             '预估总时长：',
             '${stats.estimatedMinutes} 分钟',
           ),
-          const SizedBox(height: AppSizes.spaceSm),
+          SizedBox(height: AppSizes.spaceSm),
 
           // ---------- 两种币的今日收益 ----------
           Row(
@@ -317,7 +317,7 @@ class TodayStatsCard extends ConsumerWidget {
                 showPlus: true,
                 fontSize: AppSizes.fontLabel,
               ),
-              const SizedBox(width: AppSizes.spaceLg),
+              SizedBox(width: AppSizes.spaceLg),
               CoinLabel(
                 type: RewardType.petCoin,
                 amount: stats.petCoinGained,
@@ -326,19 +326,19 @@ class TodayStatsCard extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.spaceMd),
+          SizedBox(height: AppSizes.spaceMd),
 
           // ---------- 今日战报按钮 ----------
           GestureDetector(
             onTap: onReportTap,
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceSm),
+              padding: EdgeInsets.symmetric(vertical: AppSizes.spaceSm),
               decoration: BoxDecoration(
                 color: AppColors.secondaryLight,
                 borderRadius: BorderRadius.circular(AppSizes.radiusCircle),
                 border: Border.all(color: AppColors.secondary, width: 1.5),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
@@ -374,7 +374,7 @@ class TodayStatsCard extends ConsumerWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: AppSizes.fontLabel,
               color: AppColors.textSecondary,
             ),
@@ -385,7 +385,7 @@ class TodayStatsCard extends ConsumerWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: AppSizes.fontLabel,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
@@ -413,7 +413,7 @@ class PetDialogueBubble extends StatelessWidget {
         ),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(
+          padding: EdgeInsets.symmetric(
             horizontal: AppSizes.spaceLg,
             vertical: AppSizes.spaceMd,
           ),
@@ -424,7 +424,7 @@ class PetDialogueBubble extends StatelessWidget {
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: AppSizes.fontLabel,
               fontWeight: FontWeight.w600,
               color: Colors.white,
