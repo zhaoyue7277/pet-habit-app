@@ -34,7 +34,18 @@
 
   <!-- 3D 宠物渲染（本地化 model-viewer，不依赖外网；Web 端由 HtmlElementView 使用）
        注意：Flutter Web 的 asset 基础路径是 assets/，声明路径 assets/3d/xxx
-       的实际 URL 是 assets/assets/3d/xxx（双 assets 前缀）。 -->
+       的实际 URL 是 assets/assets/3d/xxx（双 assets 前缀）。
+
+       ⚠️ Draco 配置必须放在 model-viewer.min.js 之前：
+       pet_*.glb 的 extensionsRequired 含 KHR_draco_mesh_compression，
+       而 model-viewer 的解码器不内嵌在 bundle 中，默认去 gstatic.com 下载
+       （国内不通 → 模型永远解码失败 → 界面空白）。
+       这里指向随包分发的本地解码器，全程离线。 -->
+  <script>
+    self.ModelViewerElement = self.ModelViewerElement || {};
+    self.ModelViewerElement.dracoDecoderLocation = 'assets/assets/3d/draco/';
+    self.ModelViewerElement.ktx2TranscoderLocation = 'assets/assets/3d/draco/';
+  </script>
   <script src="assets/assets/3d/model-viewer.min.js" type="module"></script>
 </head>
 <body>
