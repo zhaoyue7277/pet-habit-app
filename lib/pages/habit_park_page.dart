@@ -6,9 +6,11 @@ import '../routes/app_router.dart';
 import '../providers/core_providers.dart';
 import '../providers/habit_providers.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_scale.dart';
 import '../theme/app_sizes.dart';
 import '../widgets/common_widgets.dart';
 import 'habit_edit_page.dart';
+import 'habit_growth_page.dart';
 import 'recording_page.dart';
 
 /// 习惯游乐园页面
@@ -45,7 +47,7 @@ class HabitParkPage extends ConsumerWidget {
           // ---------- 顶部标题栏 ----------
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                 horizontal: AppSizes.spaceLg,
                 vertical: AppSizes.spaceMd,
               ),
@@ -53,7 +55,7 @@ class HabitParkPage extends ConsumerWidget {
                 children: [
                   const Icon(Icons.map_rounded, size: 24, color: AppColors.primaryDark),
                   const Spacer(),
-                  const Text(
+                  Text(
                     '习惯游乐园',
                     style: TextStyle(
                       fontSize: AppSizes.fontTitle,
@@ -86,19 +88,25 @@ class HabitParkPage extends ConsumerWidget {
           // ---------- 顶部插画 + 数据面板 ----------
           SliverToBoxAdapter(child: _buildHeaderCard()),
 
-          const SliverToBoxAdapter(child: SizedBox(height: AppSizes.spaceLg)),
+          // ---------- v1.4.0 待验收提示条 ----------
+          // 有记录处于「待验收」或「刚被驳回」时，给孩子一个明确的
+          // 状态反馈。没有这条横幅的话，孩子提交完会疑惑
+          // 「怎么没加币？是不是坏了？」—— 反而会去重复点击。
+          SliverToBoxAdapter(child: _buildVerifyBanner(context, ref)),
+
+          SliverToBoxAdapter(child: SizedBox(height: AppSizes.spaceLg)),
 
           // ---------- 星星进度条 ----------
           SliverToBoxAdapter(child: _buildStarProgress()),
 
-          const SliverToBoxAdapter(child: SizedBox(height: AppSizes.spaceXl)),
+          SliverToBoxAdapter(child: SizedBox(height: AppSizes.spaceXl)),
 
           // ---------- 习惯列表（按时段分组） ----------
           if (grouped.isEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 // 底部额外留白：避开中央 FAB 与底部导航栏
-                padding: const EdgeInsets.only(
+                padding: EdgeInsets.only(
                   bottom: AppSizes.bottomNavHeight + 56,
                 ),
                 child: EmptyPlaceholder(
@@ -122,7 +130,7 @@ class HabitParkPage extends ConsumerWidget {
                     child: Column(
                       children: entry.value
                           .map((h) => Padding(
-                                padding: const EdgeInsets.fromLTRB(
+                                padding: EdgeInsets.fromLTRB(
                                   AppSizes.spaceLg,
                                   0,
                                   AppSizes.spaceLg,
@@ -142,7 +150,7 @@ class HabitParkPage extends ConsumerWidget {
                   ),
                 ]),
 
-          const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: SizedBox(height: AppSizes.bottomNavHeight + 40),
           ),
         ],
@@ -151,6 +159,78 @@ class HabitParkPage extends ConsumerWidget {
   }
 
   /// 顶部卡片：左侧插画区 + 右侧数据面板
+  /// 待验收提示条（v1.4.0）
+  ///
+  /// 两种情况才显示：
+  /// 1. 有记录处于「待验收」→ 主色条 + ⏳，告诉孩子「在等了」；
+  /// 2. 有记录刚被「已驳回」→ 橙色条 + 驳回原因，告诉孩子「可以补交」。
+  ///
+  /// 都没有时返回零尺寸（不占布局）。
+  Widget _buildVerifyBanner(BuildContext context, WidgetRef ref) {
+    final pending = ref.watch(pendingHabitIdsProvider);
+    final rejected = ref.watch(rejectedCheckInsTodayProvider);
+
+    if (pending.isEmpty && rejected.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // 驳回优先显示（更需要孩子注意）
+    final showReject = rejected.isNotEmpty;
+    final count = showReject ? rejected.length : pending.length;
+    final reason = showReject && rejected.first.rejectReason != null
+        ? '：「${rejected.first.rejectReason}」'
+        : '';
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSizes.spaceLg,
+        AppSizes.spaceLg,
+        AppSizes.spaceLg,
+        0,
+      ),
+      child: Container(
+        padding: EdgeInsets.all(AppSizes.spaceMd),
+        decoration: BoxDecoration(
+          color: showReject
+              ? AppColors.warning.withValues(alpha: 0.15)
+              : AppColors.primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          border: Border.all(
+            color: showReject
+                ? AppColors.warning.withValues(alpha: 0.5)
+                : AppColors.primary.withValues(alpha: 0.35),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              showReject ? '↩️' : '⏳',
+              style: TextStyle(fontSize: AppScale.s(20)),
+            ),
+            SizedBox(width: AppSizes.spaceSm),
+            Expanded(
+              child: Text(
+                showReject
+                    ? '$count 个打卡被退回来了$reason\n补做一遍就能重新提交，我陪你一起～'
+                    : '$count 个打卡正在等爸爸妈妈确认\n确认后奖励就会到账哦～',
+                style: TextStyle(
+                  fontSize: AppSizes.fontCaption,
+                  height: 1.5,
+                  fontWeight: FontWeight.w600,
+                  color: showReject
+                      ? AppColors.secondaryDark
+                      : AppColors.primaryDark,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeaderCard() {
     return Consumer(
       builder: (context, ref, _) {
@@ -159,7 +239,7 @@ class HabitParkPage extends ConsumerWidget {
         const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
+          padding: EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
           child: AppCard(
             padding: EdgeInsets.zero,
             child: Row(
@@ -169,7 +249,7 @@ class HabitParkPage extends ConsumerWidget {
                   width: 150,
                   height: 150,
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
+                    borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(AppSizes.cardRadius),
                       bottomLeft: Radius.circular(AppSizes.cardRadius),
                     ),
@@ -205,7 +285,7 @@ class HabitParkPage extends ConsumerWidget {
                             color: Colors.white.withValues(alpha: 0.35),
                           ),
                           // 双宠物
-                          const Positioned(
+                          Positioned(
                             bottom: 16,
                             child: Row(
                               children: [
@@ -224,19 +304,19 @@ class HabitParkPage extends ConsumerWidget {
                 // ---------- 右侧：数据面板 ----------
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(AppSizes.spaceMd),
+                    padding: EdgeInsets.all(AppSizes.spaceMd),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           '${now.month}月${now.day}日 周${weekdays[now.weekday - 1]}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: AppSizes.fontBody,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: AppSizes.spaceXs),
+                        SizedBox(height: AppSizes.spaceXs),
                         // 装饰波浪线
                         Row(
                           children: List.generate(
@@ -249,7 +329,7 @@ class HabitParkPage extends ConsumerWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: AppSizes.spaceMd),
+                        SizedBox(height: AppSizes.spaceMd),
 
                         _headerLine(
                           '获得奖励：',
@@ -259,7 +339,7 @@ class HabitParkPage extends ConsumerWidget {
                               const Text('💛', style: TextStyle(fontSize: 16)),
                               Text(
                                 '+${summary.rewardGained}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: AppSizes.fontLabel,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.accentDark,
@@ -268,7 +348,7 @@ class HabitParkPage extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(height: AppSizes.spaceXs),
+                        SizedBox(height: AppSizes.spaceXs),
                         _headerLine(
                           '连击天数：',
                           Row(
@@ -276,7 +356,7 @@ class HabitParkPage extends ConsumerWidget {
                             children: [
                               Text(
                                 '${summary.maxStreak}天',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: AppSizes.fontLabel,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.secondary,
@@ -287,7 +367,7 @@ class HabitParkPage extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(height: AppSizes.spaceXs),
+                        SizedBox(height: AppSizes.spaceXs),
                         _headerLine(
                           '连击奖励：',
                           Row(
@@ -296,13 +376,60 @@ class HabitParkPage extends ConsumerWidget {
                               const Text('🪙', style: TextStyle(fontSize: 16)),
                               Text(
                                 '+${summary.streakRewardGained}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: AppSizes.fontLabel,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.secondaryDark,
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+
+                        SizedBox(height: AppSizes.spaceSm),
+
+                        // ---------- v1.4.0：习惯成长入口 ----------
+                        // 放在数据面板底部：因为用户看完「连击天数」后，
+                        // 最自然的下一步就是「想看看更长期的整体表现」。
+                        GestureDetector(
+                          onTap: () => AppNavigator.push(
+                            context,
+                            const HabitGrowthPage(),
+                          ),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppSizes.spaceSm,
+                              vertical: AppSizes.spaceXs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusCircle,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '🌱',
+                                  style: TextStyle(fontSize: AppScale.s(14)),
+                                ),
+                                SizedBox(width: AppSizes.spaceXs),
+                                Text(
+                                  '看成长',
+                                  style: TextStyle(
+                                    fontSize: AppSizes.fontTiny,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.primaryDark,
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: AppScale.s(14),
+                                  color: AppColors.primaryDark,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -323,7 +450,7 @@ class HabitParkPage extends ConsumerWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: AppSizes.fontCaption,
             color: AppColors.textSecondary,
           ),
@@ -342,12 +469,12 @@ class HabitParkPage extends ConsumerWidget {
         final done = summary.checkedCount;
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
+          padding: EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
           child: Row(
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: AppSizes.spaceMd,
                     vertical: AppSizes.spaceSm,
                   ),
@@ -369,15 +496,15 @@ class HabitParkPage extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: AppSizes.spaceSm),
+              SizedBox(width: AppSizes.spaceSm),
               Text(
                 '🐳',
                 style: TextStyle(fontSize: done > 0 ? 26 : 22),
               ),
-              const SizedBox(width: AppSizes.spaceSm),
+              SizedBox(width: AppSizes.spaceSm),
               Text(
                 summary.progressLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: AppSizes.fontBody,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
@@ -393,7 +520,7 @@ class HabitParkPage extends ConsumerWidget {
   /// 时段分组标题（对应截图：「漫游驿站 · 全天可打卡」）
   Widget _buildStationHeader(TimeSlot slot) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppSizes.spaceLg,
         0,
         AppSizes.spaceLg,
@@ -402,7 +529,7 @@ class HabitParkPage extends ConsumerWidget {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(
+            padding: EdgeInsets.symmetric(
               horizontal: AppSizes.spaceLg,
               vertical: AppSizes.spaceSm,
             ),
@@ -414,8 +541,8 @@ class HabitParkPage extends ConsumerWidget {
             child: Row(
               children: [
                 const Text('🏕️', style: TextStyle(fontSize: 18)),
-                const SizedBox(width: AppSizes.spaceSm),
-                const Text(
+                SizedBox(width: AppSizes.spaceSm),
+                Text(
                   '漫游驿站',
                   style: TextStyle(
                     fontSize: AppSizes.fontBody,
@@ -423,7 +550,7 @@ class HabitParkPage extends ConsumerWidget {
                     color: Color(0xFF8B7355),
                   ),
                 ),
-                const SizedBox(width: AppSizes.spaceSm),
+                SizedBox(width: AppSizes.spaceSm),
                 TagChip(
                   text: '${slot.label}可打卡',
                   color: const Color(0xFFE8DCC0),
@@ -440,46 +567,52 @@ class HabitParkPage extends ConsumerWidget {
 
   // ==================== 交互 ====================
 
-  /// 习惯打卡
+  /// 习惯打卡（v1.4.0：提交后进入「待验收」）
+  ///
+  /// **改动说明**：以前点一下立即发奖励、立即显示完成。现在改为
+  /// 「提交 → 等家长确认」。这里只负责提交 + 给出明确反馈，
+  /// 奖励发放发生在家长的验收队列里。
   Future<void> _checkIn(BuildContext context, WidgetRef ref, Habit habit) async {
-    final reward = await ref.read(habitControllerProvider).checkIn(habit);
+    // 已有记录时区分「待验收」和「已通过」，给出不同提示
+    final controller = ref.read(habitControllerProvider);
+    final existing = controller.todayRecord(habit);
+
+    if (existing != null && existing.isApproved) {
+      _toast(context, '今天这个习惯已经通过啦，明天继续哦～', AppColors.info);
+      return;
+    }
+
+    await controller.checkIn(habit);
     if (!context.mounted) return;
 
-    if (reward > 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '打卡成功！获得 ${habit.checkInRewardType.emoji} $reward',
-            style: const TextStyle(
-              fontSize: AppSizes.fontBody,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-          ),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            '今天已经打满啦，明天继续哦～',
-            style: TextStyle(
-              fontSize: AppSizes.fontBody,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          backgroundColor: AppColors.info,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+    final isResubmit = existing != null && existing.isRejected;
+    _toast(
+      context,
+      isResubmit
+          ? '已重新提交，等爸爸妈妈确认💪'
+          : '提交成功！等爸爸妈妈确认后就能拿到奖励啦～',
+      AppColors.primary,
+    );
+  }
+
+  /// 统一的轻提示
+  void _toast(BuildContext context, String text, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          text,
+          style: TextStyle(
+            fontSize: AppSizes.fontBody,
+            fontWeight: FontWeight.w600,
           ),
         ),
-      );
-    }
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+        ),
+      ),
+    );
   }
 
   void _openCreate(BuildContext context, WidgetRef ref) {
@@ -532,13 +665,17 @@ class HabitCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final checkedIds = ref.watch(checkedHabitIdsProvider);
+    final pendingIds = ref.watch(pendingHabitIdsProvider);
     final isCheckedToday = checkedIds.contains(habit.id);
+    final isPendingToday = pendingIds.contains(habit.id);
     final weekStatus = ref.watch(habitControllerProvider).weekStatus(habit);
+    final record = ref.watch(habitControllerProvider).todayRecord(habit);
+    final isRejectedToday = record?.isRejected ?? false;
     final checkInTime = ref.watch(habitControllerProvider).todayCheckInTime(habit);
 
     return AppCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(AppSizes.spaceMd),
+      padding: EdgeInsets.all(AppSizes.spaceMd),
       child: Row(
         children: [
           // ---------- 习惯图标 ----------
@@ -562,7 +699,7 @@ class HabitCard extends ConsumerWidget {
                   )
                 : Text(habit.iconEmoji, style: const TextStyle(fontSize: 26)),
           ),
-          const SizedBox(width: AppSizes.spaceMd),
+          SizedBox(width: AppSizes.spaceMd),
 
           // ---------- 名称 + 奖励 + 周视图 ----------
           Expanded(
@@ -576,14 +713,14 @@ class HabitCard extends ConsumerWidget {
                         habit.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: AppSizes.fontHeadline,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
                       ),
                     ),
-                    const SizedBox(width: AppSizes.spaceSm),
+                    SizedBox(width: AppSizes.spaceSm),
                     // 奖励
                     Text(
                       habit.checkInRewardType.emoji,
@@ -591,7 +728,7 @@ class HabitCard extends ConsumerWidget {
                     ),
                     Text(
                       '×${habit.checkInRewardValue}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontCaption,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accentDark,
@@ -599,10 +736,10 @@ class HabitCard extends ConsumerWidget {
                     ),
                     // 连击火苗
                     if (habit.currentStreakDays > 0) ...[
-                      const SizedBox(width: AppSizes.spaceSm),
+                      SizedBox(width: AppSizes.spaceSm),
                       Text(
                         '🔥${habit.currentStreakDays}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: AppSizes.fontCaption,
                           fontWeight: FontWeight.w700,
                           color: AppColors.secondary,
@@ -611,7 +748,7 @@ class HabitCard extends ConsumerWidget {
                     ],
                   ],
                 ),
-                const SizedBox(height: AppSizes.spaceSm),
+                SizedBox(height: AppSizes.spaceSm),
 
                 // 7 格周打卡视图
                 Row(
@@ -644,9 +781,14 @@ class HabitCard extends ConsumerWidget {
             ),
           ),
 
-          const SizedBox(width: AppSizes.spaceSm),
+          SizedBox(width: AppSizes.spaceSm),
 
-          // ---------- 星星牌：显示打卡时间 ----------
+          // ---------- 星星牌：显示打卡时间 / 验收状态 ----------
+          //
+          // 三种状态用不同底色 + 图标区分（v1.4.0）：
+          //   · 已通过 → 金色底 + 打卡时间
+          //   · 待验收 → 主色淡底 + ⏳
+          //   · 已驳回 → 橙色淡底 + ↩️（提示可补交）
           Container(
             width: 46,
             height: 46,
@@ -654,10 +796,20 @@ class HabitCard extends ConsumerWidget {
             decoration: BoxDecoration(
               color: isCheckedToday
                   ? AppColors.accent.withValues(alpha: 0.25)
-                  : AppColors.surfaceVariant,
+                  : isPendingToday
+                      ? AppColors.primary.withValues(alpha: 0.16)
+                      : isRejectedToday
+                          ? AppColors.secondary.withValues(alpha: 0.16)
+                          : AppColors.surfaceVariant,
               shape: BoxShape.circle,
               border: Border.all(
-                color: isCheckedToday ? AppColors.accentDark : AppColors.divider,
+                color: isCheckedToday
+                    ? AppColors.accentDark
+                    : isPendingToday
+                        ? AppColors.primary
+                        : isRejectedToday
+                            ? AppColors.secondary
+                            : AppColors.divider,
                 width: 2,
               ),
             ),
@@ -665,7 +817,11 @@ class HabitCard extends ConsumerWidget {
               checkInTime != null
                   ? '${checkInTime.hour.toString().padLeft(2, '0')}:'
                       '${checkInTime.minute.toString().padLeft(2, '0')}'
-                  : '⭐',
+                  : isPendingToday
+                      ? '⏳'
+                      : isRejectedToday
+                          ? '↩️'
+                          : '⭐',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: checkInTime != null ? 11 : 20,
@@ -677,7 +833,7 @@ class HabitCard extends ConsumerWidget {
             ),
           ),
 
-          const SizedBox(width: AppSizes.spaceSm),
+          SizedBox(width: AppSizes.spaceSm),
 
           // ---------- 朗读打卡入口（仅朗读/口语类习惯） ----------
           if (onRecord != null) ...[
@@ -698,12 +854,18 @@ class HabitCard extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(width: AppSizes.spaceSm),
+            SizedBox(width: AppSizes.spaceSm),
           ],
 
           // ---------- 打卡勾选框 ----------
+          //
+          // 四态（v1.4.0）：
+          //   · 已通过   → 实心勾
+          //   · 待验收   → 主色感叹号（点了也没用，已提交）
+          //   · 已驳回   → 可再次点击补交（虚线框 + ↩️）
+          //   · 未打卡   → 空心框
           GestureDetector(
-            onTap: onCheckIn,
+            onTap: isPendingToday ? null : onCheckIn,
             child: AnimatedContainer(
               duration: AppSizes.durationFast,
               width: 40,
@@ -712,19 +874,31 @@ class HabitCard extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: isCheckedToday
                     ? AppColors.secondary
-                    : Colors.transparent,
+                    : isPendingToday
+                        ? AppColors.primary.withValues(alpha: 0.18)
+                        : Colors.transparent,
                 borderRadius: BorderRadius.circular(AppSizes.radiusSm),
                 border: Border.all(
                   color: isCheckedToday
                       ? AppColors.secondary
-                      : AppColors.secondaryLight,
+                      : isPendingToday
+                          ? AppColors.primary
+                          : isRejectedToday
+                              ? AppColors.secondary
+                              : AppColors.secondaryLight,
                   width: 2.5,
                 ),
               ),
               child: isCheckedToday
                   ? const Icon(Icons.check_rounded,
                       color: Colors.white, size: 24)
-                  : null,
+                  : isPendingToday
+                      ? const Icon(Icons.hourglass_top_rounded,
+                          color: AppColors.primary, size: 22)
+                      : isRejectedToday
+                          ? const Icon(Icons.refresh_rounded,
+                              color: AppColors.secondary, size: 22)
+                          : null,
             ),
           ),
         ],
