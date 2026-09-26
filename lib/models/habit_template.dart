@@ -125,6 +125,13 @@ class PetDialogueTrigger {
 
   /// 升级
   static const String levelUp = 'level_up';
+
+  /// 点击宠物（v1.3.0 新增）
+  ///
+  /// 与 [idle] 的区别：[idle] 是「进入页面时展示的闲时台词」，
+  /// [tapPet] 是「用户主动点击宠物后说的话」—— 后者应该更短、更有回应感
+  /// （如「哎呀，你戳我干嘛～」），避免每次都念同一套闲时台词。
+  static const String tapPet = 'tap_pet';
 }
 
 /// 家长备注 / 打卡日记表（多孩隔离：通过 [childId] 关联 Child）
