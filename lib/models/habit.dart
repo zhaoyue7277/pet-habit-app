@@ -255,6 +255,23 @@ class Habit extends HiveObject {
 /// 将无法回溯「哪天打了卡」，也就做不了日历视图、周报与 7 格打卡格。
 ///
 /// 多孩隔离：同时带 [childId] 与 [habitId]。
+///
+/// **v1.4.0 新增「三态验收」**
+///
+/// 背景：孩子点一下「完成」就立即发奖励，家长完全不知情，孩子可以
+/// 秒点全部习惯刷币。现在改为「孩子打卡 → 进入待验收队列 → 家长确认」
+/// 的延迟确认机制。
+///
+/// 三个状态：
+/// - [HabitVerifyStatus.pending]  待确认：孩子已打卡，奖励**未发放**
+/// - [HabitVerifyStatus.approved] 已确认：家长点头，奖励发放
+/// - [HabitVerifyStatus.rejected] 已驳回：家长认为不算数，可写原因，
+///   孩子**补做后可重新提交**（同一天允许覆盖 pending 记录）
+///
+/// ⚠️ 兼容旧数据：v1.3.0 及之前写入的记录没有这些字段，
+/// Hive 反序列化时缺失字段会取类型默认值。为了让老记录被正确
+/// 视为「已确认」（否则升级后旧打卡会突然变成待验收），
+/// 这里用一个「哨兵」字段 [isLegacy] 来区分，详见 [verifyStatus] 的 getter。
 @HiveType(typeId: 4)
 class HabitCheckIn extends HiveObject {
   HabitCheckIn({
@@ -263,6 +280,11 @@ class HabitCheckIn extends HiveObject {
     required this.habitId,
     required this.checkInTime,
     required this.dateKey,
+    this.verifyStatusRaw,
+    this.verifiedAt,
+    this.rejectReason,
+    this.rewardGiven = false,
+    this.isLegacy = false,
   });
 
   @HiveField(0)
@@ -284,7 +306,105 @@ class HabitCheckIn extends HiveObject {
   @HiveField(4)
   String dateKey;
 
+  // ==================== v1.4.0 三态验收字段 ====================
+
+  /// 验收状态的持久化值（见 [HabitVerifyStatus]）。
+  ///
+  /// 用 `int?` 而非枚举本身，是为了让「字段缺失」与「值为 0」
+  /// 可区分——Hive 对枚举缺失字段会给到 `values[0]`，
+  /// 而 `values[0]` 恰好是 pending，会把旧记录误判为待验收。
+  /// 存 int? 时缺失即为 null，配合 [isLegacy] 优雅兜底。
+  @HiveField(27)
+  int? verifyStatusRaw;
+
+  /// 家长确认 / 驳回的时间
+  @HiveField(28)
+  DateTime? verifiedAt;
+
+  /// 驳回原因（家长填写，给孩子看）
+  @HiveField(29)
+  String? rejectReason;
+
+  /// 奖励是否已实际发放。
+  ///
+  /// **不能靠状态推断**：approved 也分「刚同意还没发」与「已发」两步，
+  /// 中间可能因异常中断。用它做幂等标记，避免重复发币。
+  @HiveField(30)
+  bool rewardGiven;
+
+  /// 是否为 v1.3.0 及之前写入的旧记录。
+  ///
+  /// 旧记录写入时还没这套机制，语义上等价于「已确认」（当时点即发）。
+  /// 新记录一律 false。
+  @HiveField(31)
+  bool isLegacy;
+
+  // ==================== 派生属性 ====================
+
+  /// 验收状态（对外统一入口）
+  HabitVerifyStatus get verifyStatus {
+    // 旧数据：没有状态字段，视为已确认（当时是「点了就发」）
+    if (isLegacy && verifyStatusRaw == null) {
+      return HabitVerifyStatus.approved;
+    }
+    final raw = verifyStatusRaw;
+    if (raw == null) return HabitVerifyStatus.pending;
+    if (raw < 0 || raw >= HabitVerifyStatus.values.length) {
+      return HabitVerifyStatus.pending;
+    }
+    return HabitVerifyStatus.values[raw];
+  }
+
+  set verifyStatus(HabitVerifyStatus v) => verifyStatusRaw = v.index;
+
+  /// 是否待家长确认
+  bool get isPending => verifyStatus == HabitVerifyStatus.pending;
+
+  /// 是否已通过
+  bool get isApproved => verifyStatus == HabitVerifyStatus.approved;
+
+  /// 是否被驳回
+  bool get isRejected => verifyStatus == HabitVerifyStatus.rejected;
+
+  /// 是否计入「已完成」（已通过或旧数据）
+  ///
+  /// **重要**：统计打卡率、连击、周报时一律用这个，
+  /// 而不是 `isApproved`——否则每天都会漏掉老记录。
+  bool get countsAsDone =>
+      verifyStatus == HabitVerifyStatus.approved;
+
   /// 生成标准日期键
   static String keyOf(DateTime dt) =>
       '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+
+  HabitCheckIn copyWith({
+    String? id,
+    String? childId,
+    String? habitId,
+    DateTime? checkInTime,
+    String? dateKey,
+    int? verifyStatusRaw,
+    HabitVerifyStatus? verifyStatusValue,
+    DateTime? verifiedAt,
+    String? rejectReason,
+    bool? rewardGiven,
+    bool? isLegacy,
+    bool clearVerifiedAt = false,
+    bool clearRejectReason = false,
+  }) {
+    return HabitCheckIn(
+      id: id ?? this.id,
+      childId: childId ?? this.childId,
+      habitId: habitId ?? this.habitId,
+      checkInTime: checkInTime ?? this.checkInTime,
+      dateKey: dateKey ?? this.dateKey,
+      verifyStatusRaw:
+          verifyStatusValue?.index ?? verifyStatusRaw ?? this.verifyStatusRaw,
+      verifiedAt: clearVerifiedAt ? null : (verifiedAt ?? this.verifiedAt),
+      rejectReason:
+          clearRejectReason ? null : (rejectReason ?? this.rejectReason),
+      rewardGiven: rewardGiven ?? this.rewardGiven,
+      isLegacy: isLegacy ?? this.isLegacy,
+    );
+  }
 }
