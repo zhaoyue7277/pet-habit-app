@@ -1150,6 +1150,35 @@ class DatabaseService {
           triggerType: PetDialogueTrigger.checkInDone, priority: 68),
       PetDialogue(id: 'dl_read_ok_2', text: '朗读完成！声音越来越有感情了呢～',
           triggerType: PetDialogueTrigger.checkInDone, priority: 66),
+      // ===== v1.3.0 点击宠物（专用台词，比闲时台词更短更有回应感）=====
+      //
+      // 设计要点：
+      //   1. 通用台词不设 moodState，任何情绪下都可能被选中；
+      //   2. 情绪专属台词（饿/困/委屈/开心）优先级更高，让点击回应贴合当下状态；
+      //   3. 全部控制在 15 字以内 —— 气泡不宜过长，孩子一眼能读完。
+      PetDialogue(id: 'dl_tap_1', text: '哎呀，你戳我干嘛～',
+          triggerType: PetDialogueTrigger.tapPet, priority: 20),
+      PetDialogue(id: 'dl_tap_2', text: '嘿嘿，被摸到啦！',
+          triggerType: PetDialogueTrigger.tapPet, priority: 20),
+      PetDialogue(id: 'dl_tap_3', text: '痒痒的，别挠我啦～',
+          triggerType: PetDialogueTrigger.tapPet, priority: 20),
+      PetDialogue(id: 'dl_tap_4', text: '{name}，我在呢！',
+          triggerType: PetDialogueTrigger.tapPet, priority: 20),
+      PetDialogue(id: 'dl_tap_5', text: '呀！你吓我一跳～',
+          triggerType: PetDialogueTrigger.tapPet, priority: 20),
+      // 情绪专属的点击回应
+      PetDialogue(id: 'dl_tap_happy', text: '今天好开心，转圈圈给你看！',
+          triggerType: PetDialogueTrigger.tapPet,
+          moodState: PetMoodState.happy, priority: 70),
+      PetDialogue(id: 'dl_tap_hungry', text: '肚子饿了…有好吃的吗？',
+          triggerType: PetDialogueTrigger.tapPet,
+          moodState: PetMoodState.hungry, priority: 80),
+      PetDialogue(id: 'dl_tap_sleepy', text: '好困呀…让我再睡会儿～',
+          triggerType: PetDialogueTrigger.tapPet,
+          moodState: PetMoodState.sleepy, priority: 70),
+      PetDialogue(id: 'dl_tap_sad', text: '陪我玩一会儿好不好嘛～',
+          triggerType: PetDialogueTrigger.tapPet,
+          moodState: PetMoodState.sad, priority: 80),
     ];
     for (final d in list) {
       await petDialogues.put(d.id, d);
@@ -1180,7 +1209,12 @@ class DatabaseService {
     }
 
     // 优先匹配情绪
-    if (moodState != null && trigger == PetDialogueTrigger.idle) {
+    //
+    // v1.3.0：把 tapPet 也纳入情绪匹配 —— 点击回应应该贴合宠物当下状态
+    // （饿了就说饿、困了就说困），而不是无论什么状态都随机念一句通用台词。
+    if (moodState != null &&
+        (trigger == PetDialogueTrigger.idle ||
+            trigger == PetDialogueTrigger.tapPet)) {
       final matched = candidates.where((d) => d.moodState == moodState).toList();
       if (matched.isNotEmpty) candidates = matched;
     }
