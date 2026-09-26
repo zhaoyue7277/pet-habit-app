@@ -131,7 +131,7 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
         ),
         title: Text(
           state.taskTitle.isEmpty ? '专注时间' : state.taskTitle,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: AppSizes.fontHeadline,
             fontWeight: FontWeight.w700,
           ),
@@ -139,7 +139,7 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
         actions: [
           // 状态指示
           Padding(
-            padding: const EdgeInsets.only(right: AppSizes.spaceLg),
+            padding: EdgeInsets.only(right: AppSizes.spaceLg),
             child: Center(
               child: TagChip(
                 text: state.status.label,
@@ -158,7 +158,7 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
             // ---------- 居中倒计时 ----------
             _buildTimer(state),
 
-            const SizedBox(height: AppSizes.spaceXl),
+            SizedBox(height: AppSizes.spaceXl),
 
             // ---------- 宠物陪伴 ----------
             _buildPetCompanion(state),
@@ -168,12 +168,12 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
             // ---------- 白噪音控制 ----------
             _buildWhiteNoisePanel(state),
 
-            const SizedBox(height: AppSizes.spaceXl),
+            SizedBox(height: AppSizes.spaceXl),
 
             // ---------- 操作按钮 ----------
             _buildControls(state),
 
-            const SizedBox(height: AppSizes.spaceXxl),
+            SizedBox(height: AppSizes.spaceXxl),
           ],
         ),
       ),
@@ -239,18 +239,18 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
-                  const SizedBox(height: AppSizes.spaceSm),
+                  SizedBox(height: AppSizes.spaceSm),
                   Text(
                     '共 ${state.planMinutes} 分钟',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: AppSizes.fontLabel,
                       color: AppColors.textSecondary,
                     ),
                   ),
                   if (state.status == PomodoroStatus.paused) ...[
-                    const SizedBox(height: AppSizes.spaceSm),
+                    SizedBox(height: AppSizes.spaceSm),
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: AppSizes.spaceMd,
                         vertical: AppSizes.spaceXs,
                       ),
@@ -259,7 +259,7 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
                         borderRadius:
                             BorderRadius.circular(AppSizes.radiusCircle),
                       ),
-                      child: const Text(
+                      child: Text(
                         '⏸ 已暂停（切出 App 会暂停计时）',
                         style: TextStyle(
                           fontSize: AppSizes.fontCaption,
@@ -295,14 +295,14 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
           isJumping: isCelebrating,
           showGlow: isCelebrating,
         ),
-        const SizedBox(height: AppSizes.spaceSm),
+        SizedBox(height: AppSizes.spaceSm),
         Text(
           isCelebrating
               ? '太棒了！你做到了 🎉'
               : state.status == PomodoroStatus.paused
                   ? '我在等你回来哦～'
                   : '我会一直陪着你专注 ✨',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: AppSizes.fontLabel,
             fontWeight: FontWeight.w600,
             color: AppColors.textSecondary,
@@ -315,15 +315,15 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
   /// 白噪音控制面板
   Widget _buildWhiteNoisePanel(PomodoroState state) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
+      padding: EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
       child: AppCard(
         child: Column(
           children: [
             Row(
               children: [
                 const Text('🎵', style: TextStyle(fontSize: 20)),
-                const SizedBox(width: AppSizes.spaceSm),
-                const Text(
+                SizedBox(width: AppSizes.spaceSm),
+                Text(
                   '白噪音',
                   style: TextStyle(
                     fontSize: AppSizes.fontBody,
@@ -334,7 +334,7 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
                 const Spacer(),
                 // 静音提示（音频文件缺失时）
                 if (!_whiteNoise.assetsAvailable)
-                  const Text(
+                  Text(
                     '音频未放入',
                     style: TextStyle(
                       fontSize: AppSizes.fontTiny,
@@ -343,7 +343,7 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
                   ),
               ],
             ),
-            const SizedBox(height: AppSizes.spaceMd),
+            SizedBox(height: AppSizes.spaceMd),
 
             // 音效选择按钮
             Wrap(
@@ -354,7 +354,7 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
                 return GestureDetector(
                   onTap: () => _toggleWhiteNoise(type),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: AppSizes.spaceLg,
                       vertical: AppSizes.spaceSm,
                     ),
@@ -370,7 +370,7 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
                       children: [
                         Text(type.emoji,
                             style: const TextStyle(fontSize: 16)),
-                        const SizedBox(width: AppSizes.spaceXs),
+                        SizedBox(width: AppSizes.spaceXs),
                         Text(
                           type.label,
                           style: TextStyle(
@@ -401,7 +401,7 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
     if (state.status == PomodoroStatus.finished ||
         state.status == PomodoroStatus.aborted) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
+        padding: EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
         child: BouncyButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('返回首页'),
@@ -410,7 +410,7 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
+      padding: EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
       child: Row(
         children: [
           // 放弃按钮
@@ -421,7 +421,7 @@ class _PomodoroPageState extends ConsumerState<PomodoroPage>
               child: const Text('放弃'),
             ),
           ),
-          const SizedBox(width: AppSizes.spaceLg),
+          SizedBox(width: AppSizes.spaceLg),
 
           // 暂停 / 继续
           Expanded(
@@ -610,7 +610,7 @@ class _CelebrateDialogState extends State<_CelebrateDialog>
             ),
           ),
           Container(
-            padding: const EdgeInsets.all(AppSizes.spaceXl),
+            padding: EdgeInsets.all(AppSizes.spaceXl),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppSizes.radiusXl),
@@ -619,8 +619,8 @@ class _CelebrateDialogState extends State<_CelebrateDialog>
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text('🎉', style: TextStyle(fontSize: 48)),
-                const SizedBox(height: AppSizes.spaceMd),
-                const Text(
+                SizedBox(height: AppSizes.spaceMd),
+                Text(
                   '专注完成！',
                   style: TextStyle(
                     fontSize: AppSizes.fontTitle,
@@ -628,7 +628,7 @@ class _CelebrateDialogState extends State<_CelebrateDialog>
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: AppSizes.spaceLg),
+                SizedBox(height: AppSizes.spaceLg),
 
                 // 宠物欢呼
                 PetAvatar(
@@ -638,17 +638,17 @@ class _CelebrateDialogState extends State<_CelebrateDialog>
                   isJumping: true,
                   showGlow: true,
                 ),
-                const SizedBox(height: AppSizes.spaceMd),
+                SizedBox(height: AppSizes.spaceMd),
 
                 Text(
                   widget.dialogue,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: AppSizes.fontLabel,
                     color: AppColors.textSecondary,
                   ),
                 ),
-                const SizedBox(height: AppSizes.spaceLg),
+                SizedBox(height: AppSizes.spaceLg),
 
                 // 奖励展示
                 Row(
@@ -659,10 +659,10 @@ class _CelebrateDialogState extends State<_CelebrateDialog>
                       amount: widget.rewardCoin,
                       showPlus: true,
                     ),
-                    const SizedBox(width: AppSizes.spaceLg),
+                    SizedBox(width: AppSizes.spaceLg),
                     Text(
                       '⭐ +${widget.expGained} 经验',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: AppSizes.fontBody,
                         fontWeight: FontWeight.w700,
                         color: AppColors.secondaryDark,
@@ -670,7 +670,7 @@ class _CelebrateDialogState extends State<_CelebrateDialog>
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSizes.spaceXl),
+                SizedBox(height: AppSizes.spaceXl),
 
                 BouncyButton(
                   onPressed: widget.onConfirm,
@@ -755,7 +755,7 @@ class _AbandonDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       child: Padding(
-        padding: const EdgeInsets.all(AppSizes.spaceXl),
+        padding: EdgeInsets.all(AppSizes.spaceXl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -765,8 +765,8 @@ class _AbandonDialog extends StatelessWidget {
               size: 110,
               moodState: PetMoodState.sad,
             ),
-            const SizedBox(height: AppSizes.spaceMd),
-            const Text(
+            SizedBox(height: AppSizes.spaceMd),
+            Text(
               '本次任务失败',
               style: TextStyle(
                 fontSize: AppSizes.fontHeadline,
@@ -774,18 +774,18 @@ class _AbandonDialog extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceMd),
+            SizedBox(height: AppSizes.spaceMd),
             Text(
               dialogue,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: AppSizes.fontBody,
                 color: AppColors.textSecondary,
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceSm),
-            const Text(
+            SizedBox(height: AppSizes.spaceSm),
+            Text(
               '（离开 App 太久，本次不计入学习时长）',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -793,7 +793,7 @@ class _AbandonDialog extends StatelessWidget {
                 color: AppColors.textHint,
               ),
             ),
-            const SizedBox(height: AppSizes.spaceXl),
+            SizedBox(height: AppSizes.spaceXl),
             BouncyButton(
               onPressed: onConfirm,
               width: 200,
